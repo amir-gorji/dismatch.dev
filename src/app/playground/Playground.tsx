@@ -8,12 +8,14 @@ import type * as MonacoType from "monaco-editor/esm/vs/editor/editor.api.js";
 type MonacoTsNs = typeof import("monaco-editor").typescript;
 import { useTheme } from "next-themes";
 
+import { BrandMark } from "@/components/brand-mark";
 import {
   ResizableHandle,
   ResizablePanel,
   ResizablePanelGroup,
 } from "@/components/ui/resizable";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { cn } from "@/lib/utils";
 import { Console } from "./Console";
 import { VersionSwitcher } from "./VersionSwitcher";
 import { loadDismatchTypes } from "./dismatch-types";
@@ -133,13 +135,37 @@ export function Playground() {
 
   return (
     <div className="flex min-h-dvh flex-col">
-      <header className="flex min-h-16 shrink-0 flex-col gap-4 border-b border-border/70 bg-card/70 px-4 py-3 backdrop-blur-sm sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex min-w-0 items-baseline gap-3">
-          <Link href="/" className="text-sm font-semibold tracking-tight">
-            dismatch
+      <header className="flex min-h-16 shrink-0 flex-col gap-4 border-b border-border/70 bg-background/80 px-4 py-3 backdrop-blur-md sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex min-w-0 items-center gap-3">
+          <Link
+            href="/"
+            className="flex items-center gap-2.5 text-sm font-semibold tracking-tight transition-opacity hover:opacity-80"
+            aria-label="dismatch home"
+          >
+            <BrandMark size={28} />
+            <span className="font-heading">dismatch</span>
           </Link>
-          <span className="truncate text-xs text-muted-foreground">
-            / playground
+          <span className="text-muted-foreground/60">/</span>
+          <span className="truncate text-xs font-medium text-muted-foreground">
+            playground
+          </span>
+          <span
+            className={cn(
+              "hidden items-center gap-1.5 rounded-full border border-border/70 px-2 py-0.5 text-[11px] font-mono sm:inline-flex",
+              running
+                ? "border-(--color-accent-brand)/50 text-(--color-accent-brand-strong)"
+                : "text-muted-foreground",
+            )}
+          >
+            <span
+              className={cn(
+                "h-1.5 w-1.5 rounded-full",
+                running
+                  ? "bg-(--color-accent-brand) motion-safe:animate-pulse"
+                  : "bg-muted-foreground/40",
+              )}
+            />
+            {running ? "running" : "idle"}
           </span>
         </div>
         <div className="flex items-center gap-2 self-end sm:self-auto">
