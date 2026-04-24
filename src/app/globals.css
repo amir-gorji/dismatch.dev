@@ -91,7 +91,20 @@
   --color-surface: color-mix(in oklab, var(--card) 90%, white 10%);
   --color-surface-muted: color-mix(in oklab, var(--muted) 82%, white 18%);
   --color-accent-strong: oklch(0.62 0.11 236);
+  --color-accent-brand: oklch(0.66 0.12 195);
+  --color-accent-brand-soft: color-mix(in oklab, var(--color-accent-brand) 16%, transparent);
+  --color-accent-brand-strong: oklch(0.56 0.13 195);
+  --color-danger-soft: color-mix(in oklab, var(--destructive) 14%, transparent);
   --color-code: oklch(0.29 0.03 255);
+  --tok-fg: oklch(0.28 0.02 255);
+  --tok-keyword: oklch(0.5 0.16 305);
+  --tok-type: oklch(0.5 0.13 215);
+  --tok-string: oklch(0.5 0.14 145);
+  --tok-fn: oklch(0.5 0.14 250);
+  --tok-comment: oklch(0.62 0.02 255);
+  --tok-punct: oklch(0.55 0.02 255);
+  --tok-number: oklch(0.55 0.16 35);
+  --tok-property: oklch(0.4 0.04 255);
 }
 
 .dark {
@@ -129,7 +142,20 @@
   --color-surface: color-mix(in oklab, var(--card) 94%, black 6%);
   --color-surface-muted: color-mix(in oklab, var(--muted) 92%, black 8%);
   --color-accent-strong: oklch(0.77 0.1 230);
+  --color-accent-brand: oklch(0.78 0.11 195);
+  --color-accent-brand-soft: color-mix(in oklab, var(--color-accent-brand) 18%, transparent);
+  --color-accent-brand-strong: oklch(0.84 0.12 195);
+  --color-danger-soft: color-mix(in oklab, var(--destructive) 18%, transparent);
   --color-code: oklch(0.9 0.01 255);
+  --tok-fg: oklch(0.92 0.01 255);
+  --tok-keyword: oklch(0.78 0.13 305);
+  --tok-type: oklch(0.82 0.1 215);
+  --tok-string: oklch(0.82 0.12 145);
+  --tok-fn: oklch(0.8 0.12 245);
+  --tok-comment: oklch(0.62 0.02 255);
+  --tok-punct: oklch(0.7 0.02 255);
+  --tok-number: oklch(0.82 0.13 40);
+  --tok-property: oklch(0.84 0.03 255);
 }
 
 @layer base {
@@ -151,13 +177,113 @@
   }
 }
 
+@utility panel-surface {
+  @apply rounded-3xl border border-border/70 shadow-sm backdrop-blur-sm;
+  background: linear-gradient(
+    180deg,
+    color-mix(in oklab, var(--color-surface) 92%, transparent) 0%,
+    color-mix(in oklab, var(--color-surface-muted) 88%, transparent) 100%
+  );
+}
+
+@utility code-panel {
+  @apply panel-surface relative overflow-hidden;
+}
+
+@utility bento-card {
+  @apply panel-surface flex flex-col gap-3 p-6;
+}
+
+@utility brand-tile {
+  @apply inline-flex items-center justify-center;
+  color: var(--foreground);
+}
+
+@utility accent-pill {
+  @apply inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-medium;
+  border-color: color-mix(in oklab, var(--color-accent-brand) 35%, transparent);
+  background: color-mix(in oklab, var(--color-accent-brand) 8%, transparent);
+  color: var(--foreground);
+}
+
 @layer components {
-  .panel-surface {
-    @apply rounded-3xl border border-border/70 shadow-sm backdrop-blur-sm;
-    background: linear-gradient(
-      180deg,
-      color-mix(in oklab, var(--color-surface) 92%, transparent) 0%,
-      color-mix(in oklab, var(--color-surface-muted) 88%, transparent) 100%
-    );
+  .code-panel pre {
+    @apply m-0 overflow-x-auto p-5 font-mono text-[13px] leading-7;
+    color: var(--tok-fg);
+    background: transparent !important;
+  }
+  .code-panel pre code {
+    background: transparent !important;
+    font-family: var(--font-mono-stack);
+  }
+  .code-panel .shiki,
+  .code-panel .shiki span {
+    background: transparent !important;
+  }
+  .code-panel .shiki span {
+    color: var(--shiki-light);
+  }
+  .dark .code-panel .shiki span {
+    color: var(--shiki-dark);
+  }
+
+  .squiggle {
+    text-decoration: underline wavy;
+    text-decoration-color: var(--destructive);
+    text-decoration-skip-ink: none;
+    text-underline-offset: 4px;
+  }
+
+  .terminal-caret::after {
+    content: "";
+    display: inline-block;
+    width: 0.55ch;
+    height: 1em;
+    margin-left: 1px;
+    background: var(--color-accent-brand);
+    vertical-align: text-bottom;
+    animation: caret-blink 1.05s steps(1) infinite;
+  }
+
+  .tab-active-bar {
+    @apply absolute inset-x-0 -bottom-px h-px;
+    background: var(--color-accent-brand);
+  }
+}
+
+@keyframes caret-blink {
+  0%,
+  50% {
+    opacity: 1;
+  }
+  51%,
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes panel-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes squiggle-pulse {
+  0%, 100% {
+    text-decoration-color: var(--destructive);
+  }
+  50% {
+    text-decoration-color: color-mix(in oklab, var(--destructive) 50%, transparent);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .terminal-caret::after {
+    animation: none;
   }
 }
