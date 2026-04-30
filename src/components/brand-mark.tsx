@@ -12,49 +12,18 @@ export function BrandMark({
   title = 'dismatch',
 }: BrandMarkProps) {
   return (
-    <svg
-      width={size}
-      height={size}
-      viewBox='0 0 64 64'
-      role='img'
-      aria-label={title}
-      className={cn('brand-tile', className)}
+    <span
+      className={cn('inline-block shrink-0 overflow-hidden rounded-[14px]', className)}
+      style={{ width: size, height: size }}
     >
-      <title>{title}</title>
-      <defs>
-        <clipPath id='dm-frame'>
-          <rect x='0' y='0' width='64' height='64' rx='14' ry='14' />
-        </clipPath>
-      </defs>
-      <g clipPath='url(#dm-frame)'>
-        <rect x='0' y='0' width='64' height='64' fill='currentColor' opacity='0.06' />
-        <polygon points='0,0 64,0 64,28 28,64 0,64' fill='var(--color-accent-brand)' />
-        <polygon
-          points='34,64 64,34 64,64'
-          fill='currentColor'
-          opacity='0.92'
-        />
-        <circle
-          cx='42'
-          cy='22'
-          r='3.4'
-          fill='var(--background)'
-          stroke='var(--color-accent-brand-strong)'
-          strokeWidth='1.4'
-        />
-      </g>
-      <rect
-        x='0.5'
-        y='0.5'
-        width='63'
-        height='63'
-        rx='14'
-        ry='14'
-        fill='none'
-        stroke='currentColor'
-        strokeOpacity='0.18'
+      <img
+        src='/logo.png'
+        width={size}
+        height={size}
+        alt={title}
+        className='block h-full w-full object-cover'
       />
-    </svg>
+    </span>
   );
 }
 
