@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { RootProvider } from "fumadocs-ui/provider/next";
 import { ThemeProvider } from "@/components/theme-provider";
 
 const SITE_URL = "https://dismatch.dev";
@@ -60,7 +61,7 @@ export default function RootLayout({
           enableSystem={false}
           disableTransitionOnChange
         >
-          {children}
+          <RootProvider theme={{ enabled: false }}>{children}</RootProvider>
         </ThemeProvider>
       </body>
     </html>
