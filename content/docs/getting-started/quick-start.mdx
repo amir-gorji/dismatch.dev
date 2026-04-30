@@ -1,0 +1,146 @@
+---
+title: Quick Start
+description: Define a union, construct values, narrow types, pattern-match, and fold over collections — in five short steps.
+---
+
+This walk-through introduces the main APIs through a single running example.
+Each step builds on the previous one — by the end you will have used
+`createUnion`, `is`, `match`, `matchWithDefault`, `map`, `mapAll`, and `fold`.
+
+## 1. Define a union
+
+`createUnion` has two forms:
+
+- `createUnion(schema)` uses the default discriminant key `"type"`.
+- `createUnion(discriminant, schema)` lets you pick a different key.
+
+The **discriminant** is the property that holds the variant tag. In
+`{ type: "ok", data: "..." }` the discriminant key is `type` and the active
+variant is `"ok"`. Constructors return only the data fields — `createUnion`
+injects the discriminant automatically.
+
+```ts
+import { createUnion, type InferUnion } from "dismatch";
+
+const Result = createUnion({
+  ok: (data: string) => ({ data }),
+  error: (message: string) => ({ message }),
+  loading: () => ({}),
+});
+
+type Result = InferUnion<typeof Result>;
+// { type: 'ok'; data: string }
+// | { type: 'error'; message: string }
+// | { type: 'loading' }
+```
+
+<TryInPlayground id="quick-start" />
+
+If your data already uses a different key, pass it explicitly:
+
+```ts
+const Event = createUnion("kind", {
+  click: (x: number) => ({ x }),
+  key: (code: string) => ({ code }),
+});
+```
+
+## 2. Construct values
+
+```ts
+const r = Result.ok("hello"); // { type: 'ok', data: 'hello' }
+const e = Result.error("fail"); // { type: 'error', message: 'fail' }
+const l = Result.loading(); // { type: 'loading' }
+```
+
+## 3. Narrow with `is`
+
+Use `is(value, variant)` inside `if` blocks for branch narrowing, and the
+bound `Result.is(variant)` form as a `.filter()` predicate factory. Both work
+with a single variant or an array of variants.
+
+```ts
+import { is } from "dismatch";
+
+if (is(r, "ok")) {
+  r.data; // narrowed to { type: 'ok'; data: string }
+}
+
+const errors = results.filter(Result.is("error"));
+//    ^? { type: 'error'; message: string }[]
+
+const settled = results.filter(Result.is(["ok", "error"]));
+```
+
+<TryInPlayground id="is-guard" />
+
+`Result.isKnown(value)` is the runtime equivalent — true if the value is any
+declared variant. Use it at system boundaries (network responses, message
+queues) to validate incoming data.
+
+## 4. Pattern-match
+
+Every matcher is **handlers-first** and curried — pass the handlers and you
+get back a reusable function.
+
+```ts
+const label = Result.match({
+  ok: ({ data }) => `Data: ${data}`,
+  error: ({ message }) => `Error: ${message}`,
+  loading: () => "Loading...",
+});
+
+label(r); // 'Data: hello'
+results.map(label); // string[]
+```
+
+<TryInPlayground id="match-reusable" />
+
+Need to handle only some variants? Use `matchWithDefault`:
+
+```ts
+const banner = Result.matchWithDefault({
+  error: ({ message }) => `Something went wrong: ${message}`,
+  Default: () => "All good",
+});
+```
+
+<TryInPlayground id="match-with-default" />
+
+To transform variants in place (preserving the discriminant), use `map` for
+partial and `mapAll` for exhaustive transforms:
+
+```ts
+const cleared = Result.map({
+  error: ({ message }) => ({ message: "" }),
+});
+
+const normalized = Result.mapAll({
+  ok: ({ data }) => ({ data: data.trim() }),
+  error: ({ message }) => ({ message: message.trim() }),
+  loading: () => ({}),
+});
+```
+
+<TryInPlayground id="map-mapall" />
+
+## 5. Fold over a collection
+
+`fold` aggregates a collection in a single exhaustive pass — no `reduce`
+wrapper, no `switch`.
+
+```ts
+const stats = Result.fold(results, { oks: 0, errors: 0, loadings: 0 })({
+  ok: (acc) => ({ ...acc, oks: acc.oks + 1 }),
+  error: (acc) => ({ ...acc, errors: acc.errors + 1 }),
+  loading: (acc) => ({ ...acc, loadings: acc.loadings + 1 }),
+});
+```
+
+## Where next
+
+- The [Discriminated Unions primer](/docs/discriminated-unions) explains the
+  problem dismatch solves and when to reach for it.
+- The [Standalone API](/docs/standalone-api/matching) covers `match`, `map`,
+  `fold` and friends — usable on any union, no factory required.
+- For async work, see the [Async APIs](/docs/async).

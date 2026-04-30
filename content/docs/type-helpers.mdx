@@ -1,0 +1,111 @@
+---
+title: Type Helpers
+description: Type-only exports — InferUnion, TakeDiscriminant, Folder, AsyncMatcher, and friends — for advanced typings or library authors.
+---
+
+dismatch's runtime API is small. Most of its type machinery is internal — but
+when you need to declare handler maps separately from the call site, or
+extract structural information about a union, the following type-only exports
+are available.
+
+You almost never need to import these by hand: TypeScript infers handler
+types from the call site.
+
+## `InferUnion<T>`
+
+Extracts the union type from a `createUnion` factory:
+
+```ts
+import { createUnion, type InferUnion } from "dismatch";
+
+const Shape = createUnion({
+  circle: (radius: number) => ({ radius }),
+  rectangle: (w: number, h: number) => ({ width: w, height: h }),
+});
+
+type Shape = InferUnion<typeof Shape>;
+// { type: 'circle'; radius: number }
+// | { type: 'rectangle'; width: number; height: number }
+```
+
+## `TakeDiscriminant<T>`
+
+Extracts the discriminant key from a union type — narrow string-typed
+properties shared across all variants:
+
+```ts
+import type { TakeDiscriminant } from "dismatch";
+
+type D = TakeDiscriminant<Shape>; // 'type'
+```
+
+Useful when writing higher-order helpers that should work with any
+discriminated union.
+
+## `Folder<T, Acc, Discriminant>` / `FolderWithDefault<T, Acc, Discriminant>`
+
+Handler-map types for `fold` and `foldWithDefault`. Use when defining a
+handler object away from the call site:
+
+```ts
+import type { Folder, FolderWithDefault } from "dismatch";
+
+type ShapeFolder = Folder<Shape, number, "type">;
+
+const sumArea: ShapeFolder = {
+  circle: (acc, { radius }) => acc + Math.PI * radius ** 2,
+  rectangle: (acc, { width, height }) => acc + width * height,
+};
+```
+
+The type ensures every variant has a handler with the right signature.
+`FolderWithDefault` adds a required `Default` entry.
+
+## Async type helpers
+
+Async counterparts to the sync handler-map types are exported from
+`dismatch/async`:
+
+- `AsyncMatcher` — exhaustive async match
+- `AsyncMatcherWithDefault` — partial async match with `Default`
+- `AsyncMapper` — partial async transform
+- `AsyncFolder` — exhaustive async fold
+- `AsyncFolderWithDefault` — partial async fold with `Default`
+
+Each handler may return either the sync result or a `Promise` of it.
+
+```ts
+import type { AsyncMatcher, AsyncFolder } from "dismatch/async";
+
+type FetchProfile = AsyncMatcher<User, Profile, "type">;
+type EventScorer = AsyncFolder<Event, number, "type">;
+```
+
+## Other re-exports
+
+- `Matcher`, `MatcherWithDefault`, `Mapper`, `MapperWithDefault` — sync
+  handler-map types, parallel to the async ones.
+- The runtime types attached to factory output (`createUnion`,
+  `createPipeHandlers`) are exposed for advanced cases — most users never
+  need them.
+
+## When you don't need these
+
+If you write handlers inline at the call site, every type is inferred:
+
+```ts
+const area = match(shape)({
+  circle: ({ radius }) => Math.PI * radius ** 2,
+  rectangle: ({ width, height }) => width * height,
+});
+```
+
+No imports beyond `match`. Reach for the type helpers only when defining
+handler objects in their own modules, building higher-order helpers, or
+typing a stored handler.
+
+## Reach for what next
+
+- For factory-based unions, see [`createUnion`](/docs/create-union).
+- For binding handlers without a factory, see
+  [`createPipeHandlers`](/docs/pipe-handlers).

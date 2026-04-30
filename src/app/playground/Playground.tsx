@@ -20,15 +20,23 @@ import { Console } from "./Console";
 import { VersionSwitcher } from "./VersionSwitcher";
 import { loadDismatchTypes } from "./dismatch-types";
 import { runCode, type LogEntry } from "./runner";
+import { getSnippet } from "./snippets";
 import { STARTER_CODE } from "./starter";
 import { useDebounced } from "./use-debounced";
 import { fetchVersions } from "./versions";
 
 const FILE_PATH = "file:///playground.ts";
 
+function readInitialCode(): string {
+  if (typeof window === "undefined") return STARTER_CODE;
+  const params = new URLSearchParams(window.location.search);
+  const fromParam = getSnippet(params.get("snippet"));
+  return fromParam ?? STARTER_CODE;
+}
+
 export function Playground() {
   const { resolvedTheme } = useTheme();
-  const [code, setCode] = useState(STARTER_CODE);
+  const [code, setCode] = useState(readInitialCode);
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [versions, setVersions] = useState<string[]>([]);
   const [version, setVersion] = useState<string>("");

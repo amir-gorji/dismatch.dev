@@ -1,0 +1,169 @@
+---
+title: createUnion
+description: One schema, full toolkit — constructors, type guards, isKnown runtime check, and bound matchers, all derived from a single declaration.
+---
+
+`createUnion` turns a schema of variant constructors into a factory that
+exposes everything you need to work with the resulting union: typed
+constructors, a runtime schema-membership check, a curried `is` predicate
+factory, bound matchers (`match`, `map`, `fold` and friends), and metadata.
+
+```ts
+import { createUnion, type InferUnion } from "dismatch";
+
+const Result = createUnion({
+  ok: (data: string) => ({ data }),
+  error: (message: string) => ({ message }),
+  loading: () => ({}),
+});
+
+type Result = InferUnion<typeof Result>;
+// { type: 'ok'; data: string }
+// | { type: 'error'; message: string }
+// | { type: 'loading' }
+```
+
+`createUnion` is the recommended starting point when **you control the shape
+of the union** — it gives you a single source of truth for the schema, which
+the rest of the API derives from automatically.
+
+## Constructors
+
+Each schema entry becomes a typed factory function. Constructors return only
+the data fields — `createUnion` injects the discriminant for you.
+
+```ts
+const r = Result.ok("hello"); // { type: 'ok', data: 'hello' }
+const e = Result.error("fail"); // { type: 'error', message: 'fail' }
+const l = Result.loading(); // { type: 'loading' }
+```
+
+## `isKnown`
+
+`isKnown` is the runtime schema-membership check — `true` if the value is
+any declared variant, `false` otherwise. Use it at system boundaries.
+
+```ts
+Result.isKnown(apiResponse); // true if type is 'ok' | 'error' | 'loading'
+Result.isKnown({ type: "unknown" }); // false
+Result.isKnown(null); // false
+```
+
+This is different from [`isUnion`](/docs/standalone-api/predicates#isunion),
+which only checks the structure (object with a string discriminant). `isKnown`
+also confirms the variant tag is one of the declared ones.
+
+## `is`
+
+The bound predicate factory — variant first, value second:
+
+```ts
+const errors = results.filter(Result.is("error"));
+//    ^? { type: 'error'; message: string }[]
+
+const settled = results.filter(Result.is(["ok", "error"]));
+```
+
+For value-first narrowing inside `if` blocks, use the standalone
+[`is`](/docs/standalone-api/predicates#is) — both narrow correctly, but the
+two forms exist for two different ergonomics.
+
+## Bound matchers
+
+The full sync surface is exposed on the factory: `match`, `matchWithDefault`,
+`map`, `mapAll`, `fold`, `foldWithDefault`, `count`, `partition`. They are
+the same functions described in [Standalone API](/docs/standalone-api/matching),
+pre-bound to the union type and discriminant — you don't need generics or
+the discriminant argument.
+
+```ts
+const label = Result.match({
+  ok: ({ data }) => `Data: ${data}`,
+  error: ({ message }) => `Error: ${message}`,
+  loading: () => "Loading...",
+});
+
+const banner = Result.matchWithDefault({
+  error: ({ message }) => `Something went wrong: ${message}`,
+  Default: () => "All good",
+});
+
+const stats = Result.fold(results, { oks: 0, errors: 0, loadings: 0 })({
+  ok: (acc) => ({ ...acc, oks: acc.oks + 1 }),
+  error: (acc) => ({ ...acc, errors: acc.errors + 1 }),
+  loading: (acc) => ({ ...acc, loadings: acc.loadings + 1 }),
+});
+```
+
+> Async helpers are standalone-only by design — see [Async APIs](/docs/async).
+
+## `InferUnion<typeof Factory>`
+
+Derive the inhabitants type from the factory:
+
+```ts
+type Result = InferUnion<typeof Result>;
+```
+
+Use it whenever you need to type a variable, function parameter, or return
+type as the union itself.
+
+## Metadata
+
+The factory exposes its variant list and discriminant as compile-time
+constants:
+
+```ts
+Result.variants;     // readonly ['ok', 'error', 'loading']
+Result.discriminant; // 'type'
+```
+
+Useful for building runtime validators, logging, schema export, or
+reflection.
+
+## Custom discriminant
+
+If your data already uses a different property name, pass it as the first
+argument:
+
+```ts
+const Event = createUnion("kind", {
+  click: (x: number) => ({ x }),
+  key: (code: string) => ({ code }),
+});
+
+type Event = InferUnion<typeof Event>;
+// { kind: 'click'; x: number }
+// | { kind: 'key'; code: string }
+```
+
+The factory remains identical — only the injected discriminant key changes.
+Every standalone function also accepts a discriminant key as a trailing
+argument:
+
+```ts
+match(event, "kind")({ click: ..., key: ... });
+is(event, "click", "kind");
+isUnion(event, "kind");
+```
+
+I recommend `"type"` when you control the shape of the union. It's the
+default everywhere — no extra argument needed.
+
+<TryInPlayground id="create-union-custom" />
+
+## When to use what
+
+- **`createUnion`** — you control the shape, want one source of truth, and
+  want constructors plus matchers plus runtime validation.
+- **Standalone functions** — the union already exists (third-party type,
+  reducer's `Action`, JSON-parsed data) and you just want to dispatch.
+- **`createPipeHandlers`** — the union exists, you want **bound, reusable
+  matchers** that compose in `pipe`, but no constructors or `isKnown`.
+
+## Reach for what next
+
+- For the no-factory style, see [Standalone API](/docs/standalone-api/matching).
+- For binding handlers to an existing type, see
+  [`createPipeHandlers`](/docs/pipe-handlers).
+- For an off-the-shelf async-state union, see [RemoteData](/docs/remote-data).

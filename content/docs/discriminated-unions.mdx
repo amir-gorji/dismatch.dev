@@ -1,0 +1,86 @@
+---
+title: Discriminated Unions
+description: Why discriminated unions are TypeScript's sharpest modeling tool, and what dismatch adds on top.
+---
+
+A **discriminated union** is a TypeScript type built from several object
+shapes, each tagged with a literal string under the same property — the
+**discriminant**.
+
+```ts
+type Shape =
+  | { type: "circle"; radius: number }
+  | { type: "rectangle"; width: number; height: number }
+  | { type: "triangle"; base: number; height: number };
+```
+
+Once a value has been narrowed by checking that property, TypeScript knows
+exactly which fields are present:
+
+```ts
+function area(shape: Shape): number {
+  if (shape.type === "circle") return Math.PI * shape.radius ** 2;
+  if (shape.type === "rectangle") return shape.width * shape.height;
+  if (shape.type === "triangle") return 0.5 * shape.base * shape.height;
+  return shape; // never — exhaustiveness check
+}
+```
+
+Every case is a distinct variant; the compiler refuses to let you read
+`radius` off a rectangle. This is the closest thing TypeScript has to algebraic
+data types from ML-family languages, and it is the model you reach for any
+time a value can be in **one of several mutually exclusive states**: API
+results, fetch states, form modes, websocket events, tagged messages.
+
+## The recurring pain points
+
+Once you actually use unions, the same friction shows up everywhere:
+
+- **Repeated `switch` ceremony.** Every site that wants to handle the union
+  reimplements the dispatch by hand.
+- **Silent fall-through.** `default:` returns whatever you forgot to think
+  about — usually `undefined`.
+- **Exhaustiveness theatre.** The `never` trick at the end of a `switch`
+  catches missing cases at compile time, but adds noise to every callsite.
+- **No narrowing on collections.** `array.filter(s => s.type === 'circle')`
+  returns `Shape[]`, not `Circle[]` — TypeScript loses the narrowing across
+  the call.
+- **Async loses the union shape.** Awaiting an inline `match` whose handlers
+  return promises produces `Promise<A> | Promise<B>` instead of
+  `Promise<A | B>`.
+- **No runtime validation.** Discriminated unions are type-only; the moment
+  data crosses the network or a worker boundary, you're back to `any`.
+
+## What dismatch contributes
+
+`dismatch` does not replace discriminated unions — it gives them a complete
+toolkit:
+
+- **Reusable, exhaustive matchers.** `match`, `matchWithDefault`, `map`,
+  `mapAll` are curried handlers-first, so they return typed functions you can
+  drop into `array.map`, `pipe`, or callbacks.
+- **Variant-aware collection ops.** `count`, `partition`, `fold`,
+  `foldWithDefault` work on whole arrays in a single pass with both branches
+  narrowed.
+- **First-class async.** `matchAsync` and friends return `Promise<R>`, freely
+  mixing sync and async handlers.
+- **Runtime validation.** `createUnion` produces `isKnown` (schema-membership)
+  and `is(variant)` (variant check), and `UnknownVariantError` carries the
+  unknown tag and the set of registered handlers.
+- **Optional schema layer.** Use `createUnion` if you want a single source of
+  truth, or use the standalone functions on whatever unions you already have.
+
+## When *not* to reach for dismatch
+
+If the patterns you need are non-DU — regex, wildcards, nested object
+matching, class-instance matching — `ts-pattern` is the right tool. The 90%
+of TypeScript code where unions look like `{ type: "x" } | { type: "y" }` is
+where `dismatch` is most useful.
+
+## Where next
+
+- See [Using Standalone Functions](/docs/using-standalone-functions) for the
+  no-factory style.
+- Or jump straight to [Standalone API
+  reference](/docs/standalone-api/matching).
+- For factory-based unions, see [`createUnion`](/docs/create-union).

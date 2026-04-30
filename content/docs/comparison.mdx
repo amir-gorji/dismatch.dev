@@ -1,0 +1,131 @@
+---
+title: Comparison
+description: How dismatch compares to ts-pattern, unionize, and @effect/match — and when each one is the right tool.
+---
+
+> **`ts-pattern` matches any pattern. `dismatch` manages discriminated unions
+> — and is the only one with first-class async.**
+
+The short answer: pick the tool that matches your problem.
+
+- **You want regex, wildcards, nested object patterns, class-instance
+  matching?** Use `ts-pattern`. Those aren't discriminated-union problems —
+  they're pattern problems, and `ts-pattern` is purpose-built for them.
+- **You want exhaustiveness, reusable matchers, variant-aware collection
+  ops, async dispatch, and runtime validation, on plain DUs?** That's the
+  90% of TypeScript code where `dismatch` is the scalpel.
+
+## At a glance
+
+| Capability                                          |          dismatch          |      ts-pattern       | unionize  |    @effect/match     |
+| --------------------------------------------------- | :------------------------: | :-------------------: | :-------: | :------------------: |
+| **Footprint**                                       |                            |                       |           |                      |
+| Size, minified (full main entry, not gzipped)       |        **~3.4 kB**         |        ~7.7 kB        | unclear   |    ecosystem-tied    |
+| Zero dependencies                                   |             ✓              |           ✓           |     ✓     |          ✗           |
+| Per-function tree-shaking                           |             ✓              |        partial        |     —     |       partial        |
+| Active maintenance                                  |             ✓              |           ✓           | ✗ (2018)  |          ✓           |
+| **Compile-time correctness**                        |                            |                       |           |                      |
+| Exhaustive matching for DUs                         |             ✓              | ✓ via `.exhaustive()` |     ✓     |          ✓           |
+| No `{ type: '…' }` / `.with()` ceremony per branch  |             ✓              |           ✗           |     ✓     |          ✗           |
+| Reusable, curried handlers (define once, reuse)     |             ✓              |     ✗ (one-shot)      |     ✓     |       partial        |
+| Sub-union narrowing on `.filter()` / `.find()`      |             ✓              |           ✗           |     ✗     |          ✗           |
+| Payload threaded through every handler              |             ✓              |           ✗           |     ✗     |          ✗           |
+| **Async — unique to dismatch**                      |                            |                       |           |                      |
+| `matchAsync` — single value, unified `Promise<R>`   |           **✓**            |           ✗           |     ✗     |          ✗           |
+| `matchWithDefaultAsync` — partial async             |           **✓**            |           ✗           |     ✗     |          ✗           |
+| `matchAllAsync` — parallel, order-preserved         |           **✓**            |           ✗           |     ✗     |          ✗           |
+| `foldAsync` — sequential aggregation                |           **✓**            |           ✗           |     ✗     |          ✗           |
+| `foldWithDefaultAsync`                              |           **✓**            |           ✗           |     ✗     |          ✗           |
+| `mapAsync` — async partial transform                |           **✓**            |           ✗           |     ✗     |          ✗           |
+| Mixed sync + async handlers still unify             |           **✓**            |           ✗           |     ✗     |          ✗           |
+| **Variant-aware collections**                       |                            |                       |           |                      |
+| `fold` — exhaustive single-pass aggregation         |             ✓              |           ✗           |     ✗     |          ✗           |
+| `foldWithDefault` — partial aggregation             |             ✓              |           ✗           |     ✗     |          ✗           |
+| `count` by variant(s)                               |             ✓              |           ✗           |     ✗     |          ✗           |
+| `partition` (both sides narrowed)                   |             ✓              |           ✗           |     ✗     |          ✗           |
+| `map` partial transform (discriminant kept)         |             ✓              |           ✗           |     ✗     |          ✗           |
+| `mapAll` exhaustive transform                       |             ✓              |           ✗           |     ✗     |          ✗           |
+| **Runtime & schema**                                |                            |                       |           |                      |
+| `createUnion` — one schema, full toolkit            |             ✓              |           ✗           | ✓ (stale) |          ✗           |
+| `isKnown` — schema-membership check                 |             ✓              |           ✗           |     ✗     | via `@effect/schema` |
+| Named `UnknownVariantError` (`.variant`, `.known`)  |             ✓              |           ✗           |     ✗     |          ✗           |
+| Clean stack traces (point at your call site)        |             ✓              |           ✗           |     ✗     |          ✗           |
+| Companion async-state union (`dismatch/remote-data`)|             ✓              |           ✗           |     ✗     |          ✗           |
+
+## Reusable matchers — the killer differentiator
+
+Every match in `ts-pattern` is **one-shot**: it takes a value and returns a
+result. To reuse a match across many values, you wrap it in a function by
+hand:
+
+```ts
+// ts-pattern — every match is inline, one-shot, wrapped in a function
+const getArea = (shape: Shape): number =>
+  match(shape)
+    .with({ type: "circle" }, ({ radius }) => Math.PI * radius ** 2)
+    .with({ type: "rectangle" }, ({ width, height }) => width * height)
+    .exhaustive();
+```
+
+dismatch's matchers are **handlers-first** and curried — they return a
+typed reusable function directly:
+
+```ts
+// dismatch — define once, reuse anywhere
+const getArea = Shape.match({
+  circle: ({ radius }) => Math.PI * radius ** 2,
+  rectangle: ({ width, height }) => width * height,
+});
+
+shapes.map(getArea); // just works
+shapes.filter(Shape.is("circle")); // narrowed to Circle[]
+```
+
+No wrapper lambdas, no `.exhaustive()`, no `{ type: "…" }` noise per branch.
+Exhaustiveness is enforced by TypeScript itself — adding a variant breaks
+every unhandled call site at compile time.
+
+## First-class async
+
+Async handlers in TypeScript normally infer to `Promise<A> | Promise<B>`.
+`ts-pattern` and the others give you no help with this — you write the
+dispatch by hand at every site. dismatch is the only library that ships
+`matchAsync`, `matchAllAsync`, `foldAsync` and friends, all unifying the
+result to `Promise<R>` and freely mixing sync handlers.
+
+See [Async APIs](/docs/async) for the full surface and a side-by-side with
+the hand-rolled equivalent.
+
+## Variant-aware collections
+
+`fold`, `count`, `partition`, and `mapAll` are operations purpose-built for
+discriminated unions. Other libraries leave you to compose them out of
+`reduce` + `match`, which is verbose and not always exhaustive. See
+[Folding](/docs/standalone-api/folding) and
+[Predicates & Stats](/docs/standalone-api/predicates).
+
+## Tree-shaking
+
+Every standalone function is independently tree-shakable. The figures above
+are worst-case (everything imported); a project that only uses `match` and
+`is` ships well under 1 kB. ESM, `sideEffects: false`, and zero internal
+cross-references mean modern bundlers (esbuild, rollup, vite, webpack 5+)
+drop unused exports automatically.
+
+## When `ts-pattern` is the right call
+
+- Matching on regex or arbitrary predicates.
+- Pattern-matching nested object shapes that aren't discriminated unions.
+- Class-instance matching across hierarchies.
+
+For those, `ts-pattern` is genuinely better and there's no shame in pulling
+both into the same project — they don't overlap meaningfully when used to
+their strengths.
+
+## When dismatch is the right call
+
+- Discriminated unions with a string discriminant.
+- Reusable, exhaustive matchers you want to pass around.
+- Collection-level operations on unions (`fold`, `count`, `partition`).
+- Async dispatch.
+- Runtime validation against a declared schema.

@@ -1,0 +1,4 @@
+{
+  "title": "Standalone API",
+  "pages": ["matching", "mapping", "folding", "predicates", "errors"]
+}

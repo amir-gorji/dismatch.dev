@@ -1,0 +1,115 @@
+---
+title: Folding
+description: fold — exhaustive single-pass aggregation over a collection, and foldWithDefault — partial aggregation with a fallback.
+---
+
+`fold` and `foldWithDefault` aggregate a collection of discriminated union
+values into a single accumulator. They replace the
+`reduce` + `switch` (or `reduce` + `match` + `.exhaustive()`) pattern with a
+purpose-built primitive.
+
+## `fold`
+
+Exhaustive single-pass aggregator. Each handler receives
+`(accumulator, variantData)` and returns the new accumulator. All variants
+must have handlers.
+
+```ts
+import { fold } from "dismatch";
+
+type Shape =
+  | { type: "circle"; radius: number }
+  | { type: "rectangle"; width: number; height: number };
+
+const shapes: Shape[] = [
+  { type: "circle", radius: 5 },
+  { type: "rectangle", width: 4, height: 6 },
+  { type: "circle", radius: 10 },
+];
+
+const stats = fold(shapes, { circles: 0, totalArea: 0 })({
+  circle: (acc, { radius }) => ({
+    circles: acc.circles + 1,
+    totalArea: acc.totalArea + Math.PI * radius ** 2,
+  }),
+  rectangle: (acc, { width, height }) => ({
+    ...acc,
+    totalArea: acc.totalArea + width * height,
+  }),
+});
+```
+
+<TryInPlayground id="fold" />
+
+### Why `fold` instead of `reduce`
+
+Compare the same aggregation in plain TypeScript:
+
+```ts
+const stats = shapes.reduce(
+  (acc, shape) => {
+    switch (shape.type) {
+      case "circle":
+        return {
+          circles: acc.circles + 1,
+          totalArea: acc.totalArea + Math.PI * shape.radius ** 2,
+        };
+      case "rectangle":
+        return {
+          ...acc,
+          totalArea: acc.totalArea + shape.width * shape.height,
+        };
+    }
+  },
+  { circles: 0, totalArea: 0 },
+);
+```
+
+It works, but it's not exhaustive — adding a new variant produces no compile
+error, and the implicit `undefined` fall-through is a runtime hazard. With
+`fold`, missing a variant is a compile error and the accumulator type is
+declared once.
+
+## `foldWithDefault`
+
+Partial aggregation with a required `Default` fallback. Unhandled variants
+route to `Default`, which receives `(accumulator, fullItem)` so you can
+inspect the discriminant and branch inside.
+
+```ts
+import { foldWithDefault } from "dismatch";
+
+type Notification =
+  | { type: "push"; urgent: boolean; message: string }
+  | { type: "email"; subject: string }
+  | { type: "sms"; from: string };
+
+const urgentCount = foldWithDefault(notifications, 0)({
+  push: (acc, { urgent }) => acc + (urgent ? 1 : 0),
+  Default: (acc) => acc, // email and sms fall through here
+});
+```
+
+<TryInPlayground id="fold-with-default" />
+
+### Branching inside `Default`
+
+```ts
+const log = foldWithDefault(notifications, [] as string[])({
+  push: (acc, { message }) => [...acc, `[PUSH] ${message}`],
+  Default: (acc, item) => {
+    if (item.type === "email") return [...acc, `[EMAIL] ${item.subject}`];
+    return acc; // sms silently skipped
+  },
+});
+```
+
+`foldWithDefault` never throws `UnknownVariantError`.
+
+## Reach for what next
+
+- Need to count or split a collection? See
+  [Predicates & Stats](/docs/standalone-api/predicates) for `count` and
+  `partition`.
+- Need async aggregation? See [`foldAsync`](/docs/async#foldasync) and
+  [`foldWithDefaultAsync`](/docs/async#foldwithdefaultasync).

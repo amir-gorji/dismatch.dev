@@ -1,0 +1,74 @@
+---
+title: Errors
+description: UnknownVariantError — thrown by exhaustive matchers when a runtime variant has no handler. Catchable, carries .variant and .known.
+---
+
+## `UnknownVariantError`
+
+Exhaustive matchers (`match`, `matchAsync`, `fold`, `mapAll`, …) throw
+`UnknownVariantError` when a runtime value carries a discriminant tag that
+no handler covers and no `Default` fallback is available. This is a strict
+superset of what a native `switch` can detect — `switch` silently falls
+through to `default`; dismatch throws with the specific variant name and the
+set of known handlers.
+
+```ts
+import { match, UnknownVariantError } from "dismatch";
+
+try {
+  match(apiResponse)({
+    ok: ({ data }) => data,
+    error: ({ message }) => `Error: ${message}`,
+  });
+} catch (e) {
+  if (e instanceof UnknownVariantError) {
+    console.error(`Got "${e.variant}", expected one of: ${e.known.join(", ")}`);
+  }
+}
+```
+
+<TryInPlayground id="unknown-variant" />
+
+### Properties
+
+- `variant: string` — the unknown tag at runtime.
+- `known: readonly string[]` — handler keys that were registered.
+- `message` — formatted summary, e.g. `dismatch: unknown variant "weird"
+  (known: ok, error, loading)`.
+
+The `instanceof` check is class-based, so it survives bundler renames and
+works across ESM and CommonJS imports.
+
+### Where it does **not** throw
+
+`matchWithDefault`, `matchWithDefaultAsync`, `foldWithDefault`, and
+`foldWithDefaultAsync` never throw `UnknownVariantError` — they route
+unhandled variants through `Default`.
+
+### Plain `Error` for malformed input
+
+If you pass a value that isn't a structurally valid discriminated union (a
+primitive, `null`, an array, an object missing the discriminant) the
+matchers throw a plain `Error("Not a union")`. Use [`isUnion`](/docs/standalone-api/predicates#isunion)
+to validate at a system boundary.
+
+## Clean stack traces
+
+dismatch trims its own frames out of thrown error stacks, so the trace
+points at **your** call site:
+
+```
+UnknownVariantError: dismatch: unknown variant "weird" (known: ok, error, loading)
+    at handleResponse (src/api.ts:27:18)
+```
+
+This is intentional — the error is meant to surface a data integrity issue
+in your code, not be debugged inside the library.
+
+## Reach for what next
+
+- Validate inputs at the boundary with [`isKnown`](/docs/create-union#isknown)
+  (factory) or [`isUnion`](/docs/standalone-api/predicates#isunion)
+  (structural).
+- Use [`matchWithDefault`](/docs/standalone-api/matching#matchwithdefault) when
+  you'd rather route unknown variants to a fallback than throw.

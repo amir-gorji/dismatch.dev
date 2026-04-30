@@ -1,0 +1,138 @@
+---
+title: createPipeHandlers
+description: Bind handlers once, reuse the result across many values, arrays, and pipes — without generics at the call site.
+---
+
+`createPipeHandlers` is the **handlers-first** binding for a typed union. You
+declare the union type up front, get back an object whose methods accept
+handlers and return reusable functions.
+
+```ts
+import { createPipeHandlers } from "dismatch";
+
+type Shape =
+  | { type: "circle"; radius: number }
+  | { type: "rectangle"; width: number; height: number };
+
+const shapeOps = createPipeHandlers<Shape>("type");
+
+const getArea = shapeOps.match({
+  circle: ({ radius }) => Math.PI * radius ** 2,
+  rectangle: ({ width, height }) => width * height,
+});
+```
+
+`shapeOps` exposes the full sync surface — `match`, `matchWithDefault`,
+`map`, `mapAll`, `fold`, `foldWithDefault`, `count`, `partition`, and `is` —
+all bound to `Shape` and the `"type"` discriminant.
+
+<TryInPlayground id="pipe-handlers" />
+
+> Async helpers stay standalone-only by design. See [Async
+> APIs](/docs/async).
+
+## Why the argument order is reversed
+
+Standalone `match` is value-first:
+
+```ts
+const area = match(shape)({ circle: ..., rectangle: ... });
+```
+
+Pipe-handler `match` is handlers-first:
+
+```ts
+const getArea = shapeOps.match({ circle: ..., rectangle: ... });
+getArea(shape);
+```
+
+That flip is deliberate. It buys two things you cannot get from value-first
+`match`:
+
+### 1. Define once, apply many times
+
+The returned function is bound to the union type and to *your* handlers. You
+can pass it as a callback, store it in a variable, export it from a module:
+
+```ts
+const shapes: Shape[] = [
+  { type: "circle", radius: 1 },
+  { type: "rectangle", width: 2, height: 3 },
+];
+
+shapes.map(getArea); // [3.14, 6]
+```
+
+This is the single largest difference between dismatch and `ts-pattern`-style
+libraries: every match in `ts-pattern` is one-shot.
+
+### 2. Compose inside `pipe`
+
+Functional pipelines from `fp-ts`, `effect`, `remeda`, or any home-grown
+`pipe` utility expect functions of `value -> value`. Handlers-first matchers
+slot in directly:
+
+```ts
+import { pipe } from "fp-ts/function";
+
+const result = pipe(
+  shape,
+  shapeOps.match({
+    circle: () => "round",
+    rectangle: () => "flat",
+  }),
+);
+```
+
+## Variant-first predicates
+
+`shapeOps.is` returns a curried predicate factory — variant first, value
+second — so it slots straight into `.filter()` / `.find()` with full
+narrowing on both sides:
+
+```ts
+const circles = shapes.filter(shapeOps.is("circle"));
+//    ^? Circle[]
+
+const rounded = shapes.filter(shapeOps.is(["circle", "rectangle"]));
+```
+
+This is the variant-first counterpart to standalone
+[`is`](/docs/standalone-api/predicates#is) — same narrowing, no call-site
+generics.
+
+## Payloads — extra context for every handler
+
+Every reusable matcher accepts an optional **payload type parameter**.
+Handlers receive `(data, payload)`, and the resulting function takes the
+payload as its second argument:
+
+```ts
+const volume = shapeOps.match<number, { depth: number }>({
+  circle: ({ radius }, { depth }) => Math.PI * radius ** 2 * depth,
+  rectangle: ({ width, height }, { depth }) => width * height * depth,
+});
+
+volume({ type: "rectangle", width: 2, height: 5 }, { depth: 10 }); // 100
+```
+
+This is how you thread state, configuration, or context through a single
+matcher without rebuilding it per call.
+
+## When to use `createPipeHandlers` vs alternatives
+
+| Use case                                   | Prefer                   |
+| ------------------------------------------ | ------------------------ |
+| One-off match on a single value            | `match(value)(handlers)` |
+| Reuse handlers across many values / arrays | `createPipeHandlers`     |
+| Compose in a `pipe` or pass as callback    | `createPipeHandlers`     |
+| You also want constructors and `isKnown`   | `createUnion`            |
+
+## Reach for what next
+
+- For schema-driven unions with runtime validation, see
+  [`createUnion`](/docs/create-union).
+- For async dispatch, see the [Async APIs](/docs/async) — they remain
+  standalone-only by design.
+- For collection ops on a typed union without a factory, `shapeOps.fold`,
+  `shapeOps.count`, and `shapeOps.partition` work the same way.
