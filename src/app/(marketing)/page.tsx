@@ -35,7 +35,7 @@ function Hero() {
       <div className='max-w-2xl'>
         <p className='accent-pill'>
           <span className='h-1.5 w-1.5 rounded-full bg-(--color-accent-brand) motion-safe:animate-pulse' />
-          v2.4 — under 2.5 kB minified · zero deps
+          v2.5 — ~1.4 kB gzipped · zero deps · async included
         </p>
 
         <h1 className='mt-6 font-heading text-5xl font-semibold tracking-tight text-balance sm:text-6xl lg:text-7xl'>
@@ -50,15 +50,22 @@ function Hero() {
           world most TypeScript apps live in.
         </p>
 
-        <div className='mt-8 flex flex-col gap-3 sm:flex-row sm:items-stretch'>
+        <div className='mt-8 flex flex-col gap-3 sm:flex-row sm:items-stretch sm:flex-wrap'>
           <Link
-            href='/playground/'
+            href='/docs/'
             className={cn(
               buttonVariants({ size: 'lg' }),
               'bg-(--color-accent-brand-strong) text-background hover:bg-(--color-accent-brand)',
             )}
           >
-            Try it in the playground
+            Read the Docs
+          </Link>
+
+          <Link
+            href='/playground/'
+            className={cn(buttonVariants({ size: 'lg', variant: 'outline' }))}
+          >
+            Open Playground
           </Link>
 
           <div className='flex items-center overflow-hidden rounded-lg border border-border/70 bg-card/80 shadow-sm sm:max-w-xs'>

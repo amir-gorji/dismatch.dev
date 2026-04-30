@@ -39,8 +39,8 @@ export function BentoGrid() {
         <Card className='lg:col-span-2'>
           <Eyebrow>Tiny</Eyebrow>
           <CardTitle>
-            <span className='text-(--color-accent-brand-strong)'>2.04 kB</span>{' '}
-            minified.
+            <span className='text-(--color-accent-brand-strong)'>~1.4 kB</span>{' '}
+            gzipped.
           </CardTitle>
           <ul className='mt-1 space-y-2 text-sm text-muted-foreground'>
             <li className='flex items-center gap-2'>
@@ -51,16 +51,16 @@ export function BentoGrid() {
               <span className='font-mono text-xs'>sideEffects: false</span>
             </li>
             <li className='flex items-center gap-2'>
-              <Tick /> ESM + CJS shipped
+              <Tick /> per-function tree-shaking
             </li>
           </ul>
         </Card>
 
         <Card className='lg:col-span-2'>
           <Eyebrow>RemoteData included</Eyebrow>
-          <CardTitle>The four-state UI in one import.</CardTitle>
+          <CardTitle>The five-state UI in one import.</CardTitle>
           <CardDescription className='mb-3'>
-            <span className='font-mono text-xs'>notAsked · loading · failure · success</span> — the
+            <span className='font-mono text-xs'>idle · loading · refreshing · ok · failed</span> — the
             shape every async screen wants.
           </CardDescription>
           <CodeBlock snippet={bento.remote} showCopy={false} />
@@ -96,6 +96,22 @@ export function BentoGrid() {
             <span className='font-mono text-base'>partition</span>
           </CardTitle>
           <CodeBlock snippet={bento.fold} showCopy={false} />
+        </Card>
+
+        <Card className='lg:col-span-6'>
+          <Eyebrow>No factory? No problem.</Eyebrow>
+          <CardTitle>
+            <span className='font-mono text-base'>createPipeHandlers</span> —
+            handlers-first matchers for any typed union.
+          </CardTitle>
+          <CardDescription className='mb-3'>
+            Already have your unions declared? Bind matchers to the type once,
+            reuse the resulting functions everywhere — in{' '}
+            <span className='font-mono text-xs'>.map</span>,{' '}
+            <span className='font-mono text-xs'>.filter</span>, callbacks, or a
+            functional <span className='font-mono text-xs'>pipe</span>.
+          </CardDescription>
+          <CodeBlock snippet={bento.pipe} showCopy={false} />
         </Card>
       </div>
     </section>

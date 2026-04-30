@@ -145,13 +145,28 @@ shapes.map(area);             // number[]
 shapes.filter(Shape.is('circle'));`,
 
   bentoRemote: `import { RemoteData } from 'dismatch/remote-data';
+import { match } from 'dismatch';
 
-const view = RemoteData.match({
-  notAsked: () => 'tap to load',
-  loading:  () => 'loading…',
-  failure:  ({ error }) => error.message,
-  success:  ({ data })  => render(data),
+const view = match(state)({
+  idle:       () => 'tap to load',
+  loading:    () => 'loading…',
+  refreshing: ({ data }) => \`refreshing \${data.length}…\`,
+  ok:         ({ data }) => render(data),
+  failed:     ({ error }) => error.message,
 });`,
+
+  bentoPipe: `import { createPipeHandlers } from 'dismatch';
+
+// Bind once, reuse anywhere — no generics at the call site
+const shapeOps = createPipeHandlers<Shape>('type');
+
+const area = shapeOps.match({
+  circle:    ({ radius })        => Math.PI * radius ** 2,
+  rectangle: ({ width, height }) => width * height,
+});
+
+shapes.map(area);                         // number[]
+shapes.filter(shapeOps.is('circle'));     // Circle[]`,
 
   useResult: `const Result = createUnion('status', {
   ok:    (data: string)    => ({ data }),
@@ -271,6 +286,7 @@ export const bento = {
   is: snip('bentoIs', { label: 'is' }),
   handlers: snip('bentoHandlers', { label: 'reusable matchers' }),
   remote: snip('bentoRemote', { label: 'RemoteData' }),
+  pipe: snip('bentoPipe', { label: 'createPipeHandlers' }),
 };
 
 export const useCases: Snippet[] = [
