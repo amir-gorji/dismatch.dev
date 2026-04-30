@@ -34,14 +34,12 @@ export default function MarketingLayout({
 
             <div className='flex items-center gap-1'>
               <nav className='hidden items-center gap-1 md:flex'>
-                <a
-                  href='https://github.com/amir-gorji/dismatch#readme'
-                  target='_blank'
-                  rel='noreferrer'
+                <Link
+                  href='/docs/'
                   className='rounded-full px-3 py-2 text-sm text-muted-foreground transition-colors hover:text-foreground'
                 >
                   Docs
-                </a>
+                </Link>
                 <a
                   href='https://www.npmjs.com/package/dismatch'
                   target='_blank'
