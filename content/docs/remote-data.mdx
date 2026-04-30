@@ -1,0 +1,116 @@
+---
+title: RemoteData
+description: A ready-made discriminated union for async UI state — Idle, Loading, Refreshing, Ok, Failed — with constructors and full dismatch interop.
+---
+
+`dismatch/remote-data` ships a ready-made union that captures every state
+asynchronous UI tends to drift through: not-started, in-flight, in-flight
+with previous data, succeeded, and failed.
+
+```ts
+import { RemoteData, type RemoteData as RD } from "dismatch/remote-data";
+```
+
+It's a separate import path so projects that don't need it don't pay the
+bytes.
+
+## The shape
+
+```ts
+type RemoteData<T, E = Error> =
+  | { type: "idle" }
+  | { type: "loading" }
+  | { type: "refreshing"; data: T }
+  | { type: "ok"; data: T }
+  | { type: "failed"; error: E };
+```
+
+The five-state model captures distinctions other libraries collapse:
+
+- `idle` vs `loading` — has the request started?
+- `refreshing` — re-fetching while already showing prior data (e.g. SWR
+  revalidation).
+- `ok` — succeeded, data available.
+- `failed` — terminal error, with the cause attached.
+
+`E` defaults to `Error` but is generic — use a tagged error union if you
+want exhaustive error handling on the failure branch.
+
+## Constructors
+
+```ts
+RemoteData.idle();             // { type: 'idle' }
+RemoteData.loading();          // { type: 'loading' }
+RemoteData.refreshing(prev);   // { type: 'refreshing', data: prev }
+RemoteData.ok(value);          // { type: 'ok',         data: value }
+RemoteData.failed(err);        // { type: 'failed',     error: err }
+```
+
+## With standalone matchers
+
+`RemoteData<T>` is a plain discriminated union — every standalone API works
+on it without ceremony:
+
+```ts
+import { match } from "dismatch";
+
+const view = (state: RD<User[]>) =>
+  match(state)({
+    idle: () => "Click to load",
+    loading: () => "Loading…",
+    refreshing: ({ data }) => `Refreshing ${data.length} items…`,
+    ok: ({ data }) => `Loaded ${data.length} items`,
+    failed: ({ error }) => `Error: ${error.message}`,
+  });
+```
+
+<TryInPlayground id="remote-data" />
+
+## With pipe handlers
+
+Bind handlers once when you'll match the same state in many places —
+selectors, components, hooks:
+
+```ts
+import { createPipeHandlers } from "dismatch";
+
+type State = RD<User[]>;
+const stateOps = createPipeHandlers<State>("type");
+
+const isReady = stateOps.is(["ok", "refreshing"]);
+const renderHeader = stateOps.matchWithDefault({
+  failed: ({ error }) => `⚠ ${error.message}`,
+  Default: () => "Users",
+});
+```
+
+## A typical fetch flow
+
+```ts
+async function loadUsers(prev: RD<User[]>): Promise<RD<User[]>> {
+  const next: RD<User[]> = match(prev)({
+    idle: () => RemoteData.loading(),
+    loading: () => RemoteData.loading(),
+    refreshing: ({ data }) => RemoteData.refreshing(data),
+    ok: ({ data }) => RemoteData.refreshing(data),
+    failed: () => RemoteData.loading(),
+  });
+
+  try {
+    const users = await fetchUsers();
+    return RemoteData.ok(users);
+  } catch (error) {
+    return RemoteData.failed(error as Error);
+  }
+}
+```
+
+The transition table is just a `match` — every existing state has a
+considered next state, and adding a new state is a compile error until you
+handle it.
+
+## Reach for what next
+
+- For async dispatch on `RemoteData` (or any other union), see
+  [Async APIs](/docs/async).
+- To define your own status union, see [`createUnion`](/docs/create-union).

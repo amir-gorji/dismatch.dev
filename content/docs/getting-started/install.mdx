@@ -1,0 +1,46 @@
+---
+title: Install
+description: Install dismatch with npm, pnpm, yarn, or bun.
+---
+
+```bash
+npm install dismatch
+```
+
+```bash
+pnpm add dismatch
+```
+
+```bash
+yarn add dismatch
+```
+
+```bash
+bun add dismatch
+```
+
+## Requirements
+
+- TypeScript 5.x — `dismatch` leans on modern conditional and template literal
+  types for handler inference.
+- ESM or CommonJS — both are exported. The package is `sideEffects: false` so
+  any modern bundler will tree-shake unused functions.
+- Zero runtime dependencies.
+
+## Subpath imports
+
+`dismatch` ships three import paths so async and remote-data code only land in
+your bundle when you ask for them:
+
+```ts
+import { match, createUnion, createPipeHandlers } from "dismatch";
+import { matchAsync, foldAsync } from "dismatch/async";
+import { RemoteData } from "dismatch/remote-data";
+```
+
+A project that only uses `match` and `is` ships well under 1 kB.
+
+## Next step
+
+Continue to the [Quick Start](/docs/getting-started/quick-start) for a tour of
+the main APIs in five short steps.

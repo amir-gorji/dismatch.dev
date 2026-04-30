@@ -1,0 +1,177 @@
+---
+title: Async APIs
+description: matchAsync, matchAllAsync, foldAsync, and friends — async dispatch that unifies to Promise<R>, never Promise<A> | Promise<B>.
+---
+
+Async handlers in TypeScript normally infer to `Promise<A> | Promise<B>`
+instead of `Promise<A | B>`. That single fact makes ordinary
+pattern-matching libraries miserable to use with async data: every call site
+has to `await` the result and then assert or unify the type by hand.
+
+dismatch ships a parallel async surface that **unifies the result** —
+`matchAsync(value)(handlers)` returns `Promise<R>` even when only some
+handlers are async. Mixed sync/async handlers are fine.
+
+Async lives at the dedicated `dismatch/async` subpath so the main entry
+stays lean for sync-only consumers:
+
+```ts
+import {
+  matchAsync,
+  matchWithDefaultAsync,
+  matchAllAsync,
+  mapAsync,
+  foldAsync,
+  foldWithDefaultAsync,
+} from "dismatch/async";
+```
+
+By design, async helpers are **standalone-only** — there is no
+`Result.matchAsync(...)` or `pipeHandlers.matchAsync(...)`. Async dispatch
+always reads `await matchAsync(value)(handlers)`.
+
+## The mess without it
+
+Without dispatch help, dispatching to async handlers per variant looks like
+this:
+
+```ts
+async function loadProfile(user: User) {
+  // Inferred type: Promise<AdminProfile> | Promise<GuestProfile>
+  const promise =
+    user.type === "admin"
+      ? fetchAdminProfile(user.id)
+      : user.type === "guest"
+        ? fetchGuestProfile(user.id)
+        : Promise.resolve({ banned: true });
+
+  // TypeScript can't narrow this to Promise<AdminProfile | GuestProfile | { banned }>
+  const profile = await promise;
+  return profile;
+}
+```
+
+Inline ternaries lose narrowing. A `switch` with `return await` works but is
+verbose, and you still end up writing the dispatch by hand at every site.
+Mixing one synchronous branch with two async ones makes inference even
+worse.
+
+`matchAsync` collapses all of this:
+
+```ts
+const profile = await matchAsync(user)({
+  admin: async ({ id }) => fetchAdminProfile(id),
+  guest: async ({ id }) => fetchGuestProfile(id),
+  banned: ({ reason }) => ({ reason } as const), // sync handler is fine
+});
+//    ^? AdminProfile | GuestProfile | { reason: string }
+```
+
+<TryInPlayground id="match-async" />
+
+## `matchAsync`
+
+Exhaustive async pattern matching. Throws
+[`UnknownVariantError`](/docs/standalone-api/errors) if a runtime variant
+has no handler.
+
+```ts
+const profile = await matchAsync(user)({
+  admin: async ({ id }) => fetchAdminProfile(id),
+  guest: async ({ id }) => fetchGuestProfile(id),
+  banned: ({ reason }) => ({ kind: "banned", reason }),
+});
+```
+
+## `matchWithDefaultAsync`
+
+Partial async matching with an async-or-sync `Default` fallback.
+
+```ts
+const status = await matchWithDefaultAsync(result)({
+  ok: async ({ data }) => `Loaded ${data.length} items`,
+  Default: () => "Idle",
+});
+```
+
+## `matchAllAsync`
+
+Per-item async dispatch over a collection — concurrent via `Promise.all`,
+order preserved. Use when the handlers are independent (no shared
+accumulator).
+
+```ts
+const profiles = await matchAllAsync(users)({
+  admin: async ({ id }) => fetchAdminProfile(id),
+  guest: async ({ id }) => fetchGuestProfile(id),
+});
+//    ^? (AdminProfile | GuestProfile)[]
+```
+
+<TryInPlayground id="match-all-async" />
+
+## `mapAsync`
+
+Async partial transform. Like `map`, but handlers may return a `Promise`.
+Unmatched variants pass through unchanged. Result is `Promise<T>`.
+
+```ts
+const enriched = await mapAsync(shape)({
+  circle: async ({ radius }) => ({ radius: await fetchScaled(radius) }),
+});
+```
+
+## `foldAsync`
+
+Sequential async fold. Each handler may return `Acc` or `Promise<Acc>`. The
+accumulator threads through `await`, so handlers run **strictly in array
+order**. For parallel per-item dispatch (independent handlers), use
+[`matchAllAsync`](#matchallasync) instead.
+
+```ts
+const total = await foldAsync(events, 0)({
+  click: async (acc, { x }) => acc + (await scoreClick(x)),
+  key: (acc) => acc + 1,
+});
+```
+
+<TryInPlayground id="fold-async" />
+
+## `foldWithDefaultAsync`
+
+Partial async fold with an async-or-sync `Default`. Sequential — accumulator
+threads through `await`.
+
+```ts
+const summary = await foldWithDefaultAsync(events, "")({
+  click: async (acc, { x }) => `${acc} click@${await label(x)}`,
+  Default: (acc) => acc,
+});
+```
+
+## Choosing between `matchAllAsync` and `foldAsync`
+
+- Use `matchAllAsync` when each item is **independent** — concurrent
+  fetches, parallel image processing, etc. Order is preserved in the output.
+- Use `foldAsync` when you need a **shared accumulator** — running totals,
+  building up a result that depends on prior items, or any case where the
+  next handler's behaviour depends on the result of the previous one.
+
+## Type helpers for async
+
+Define handler maps separately when needed:
+
+```ts
+import type { AsyncMatcher } from "dismatch/async";
+
+type FetchProfile = AsyncMatcher<User, Profile, "type">;
+```
+
+See [Type Helpers](/docs/type-helpers) for the full list.
+
+## Reach for what next
+
+- For sync collection ops, see [Folding](/docs/standalone-api/folding) and
+  [Predicates & Stats](/docs/standalone-api/predicates).
+- For UI state shapes that pair naturally with async, see
+  [RemoteData](/docs/remote-data).

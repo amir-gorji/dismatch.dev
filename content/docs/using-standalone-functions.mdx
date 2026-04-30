@@ -1,0 +1,81 @@
+---
+title: Using Standalone Functions
+description: When to use the standalone style, how value-first APIs work, and how they compose with TypeScript inference.
+---
+
+The standalone functions are dismatch's value-first surface. Each one takes
+the value (or collection) first, the discriminant key (optional, defaults to
+`"type"`), and returns a function that accepts your handlers.
+
+```ts
+import { match } from "dismatch";
+
+const area = match(shape)({
+  circle: ({ radius }) => Math.PI * radius ** 2,
+  rectangle: ({ width, height }) => width * height,
+});
+```
+
+That two-step shape — `(value, discriminant?) => (handlers) => result` — is
+the convention every standalone function follows. Once you internalise it,
+the rest of the API becomes a vocabulary on top of the same core idea.
+
+## When to reach for the standalone style
+
+Use standalone functions when you have **already-typed unions** and don't
+need a single factory to manage them:
+
+- A union declared as a plain `type` you didn't author.
+- A value coming from `JSON.parse` after a runtime check.
+- A reducer's `Action` type defined with raw object literals.
+- A sibling library's exported union.
+
+If you control the shape and want one schema to drive constructors, type
+guards, and matching — use [`createUnion`](/docs/create-union) instead.
+
+If you have a typed union and want to **bind handlers once and reuse them**
+across many call sites or inside a `pipe`, use
+[`createPipeHandlers`](/docs/pipe-handlers).
+
+## Custom discriminant
+
+Every standalone function accepts an optional discriminant key. The default
+is `"type"`, so you can usually omit it:
+
+```ts
+match(shape)({ circle: ..., rectangle: ... });        // type
+match(event, "kind")({ click: ..., key: ... });       // kind
+is(event, "click", "kind");
+isUnion(event, "kind");
+```
+
+See [Custom discriminant](/docs/create-union#custom-discriminant) for the
+factory equivalent.
+
+## Sync vs async
+
+Async lives at `dismatch/async`:
+
+```ts
+import { matchAsync } from "dismatch/async";
+
+const profile = await matchAsync(user)({
+  admin: async ({ id }) => fetchAdminProfile(id),
+  guest: async ({ id }) => fetchGuestProfile(id),
+});
+```
+
+Mixing sync and async handlers is fine — the result still unifies to
+`Promise<R>`, never `Promise<A> | Promise<B>`. See the [Async
+APIs](/docs/async) page for the full surface and the motivation.
+
+## Where next
+
+The Standalone API section covers each function with examples:
+
+- [Matching](/docs/standalone-api/matching) — `match`, `matchWithDefault`
+- [Mapping](/docs/standalone-api/mapping) — `map`, `mapAll`
+- [Folding](/docs/standalone-api/folding) — `fold`, `foldWithDefault`
+- [Predicates & Stats](/docs/standalone-api/predicates) — `is`, `count`,
+  `partition`, `isUnion`
+- [Errors](/docs/standalone-api/errors) — `UnknownVariantError`

@@ -1,0 +1,67 @@
+---
+title: Mapping
+description: map — partial transform with pass-through, and mapAll — exhaustive transform across every variant.
+---
+
+`map` and `mapAll` transform a discriminated union into another discriminated
+union. Both inject the discriminant automatically — handlers return only the
+data fields.
+
+## `map`
+
+Partial transform. Variants with handlers are replaced; unmatched variants
+pass through **by reference** (no clone, no allocation).
+
+```ts
+import { map } from "dismatch";
+
+const bigger = map(shape)({
+  circle: ({ radius }) => ({ radius: radius * 2 }),
+});
+// circles are doubled; rectangles return the same object reference
+```
+
+The result type narrows variant-by-variant: matched variants reflect the
+return type of their handler, and unmatched variants keep their original
+shape. The output is still a discriminated union with the same discriminant.
+
+<TryInPlayground id="map-mapall" />
+
+### Refining a single variant
+
+`map` is the cleanest way to refine just one variant of a wider union:
+
+```ts
+const cleared = map(result)({
+  error: ({ message }) => ({ message: "" }),
+});
+// `ok` and `loading` pass through unchanged
+```
+
+## `mapAll`
+
+Exhaustive transform. Every variant must have a handler.
+
+```ts
+import { mapAll } from "dismatch";
+
+const normalized = mapAll(shape)({
+  circle: ({ radius }) => ({ radius: Math.abs(radius) }),
+  rectangle: ({ width, height }) => ({
+    width: Math.abs(width),
+    height: Math.abs(height),
+  }),
+});
+```
+
+Use `mapAll` when every variant has a meaningful transform; `map` when most
+should pass through.
+
+## Reach for what next
+
+- Need to **return a scalar** instead of a transformed union? Use
+  [`match`](/docs/standalone-api/matching).
+- Need handlers that may return promises? See
+  [`mapAsync`](/docs/async#mapasync).
+- Want to bind handlers once and reuse the resulting transform? Use
+  [`createPipeHandlers`](/docs/pipe-handlers).

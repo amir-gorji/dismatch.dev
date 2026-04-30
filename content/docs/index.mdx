@@ -1,20 +1,60 @@
 ---
-title: dismatch
-description: A lightweight, type-safe library for discriminated unions in TypeScript.
+title: Introduction
+description: Type-safe discriminated unions for TypeScript. Define once — get constructors, type guards, exhaustive matching, async dispatch, and runtime validation.
 ---
 
-Welcome to the dismatch documentation. This is a placeholder page for the
-Fumadocs scaffold — content will be authored in PR #2.
+`dismatch` is a small (~1.4 kB gzipped, zero dependencies) library that turns
+discriminated unions into a complete toolkit: constructors, type guards,
+exhaustive pattern matching, partial transforms, fold-based aggregation,
+async dispatch, and runtime validation — all generated from a single schema.
 
-## Sections (planned)
+```ts
+import { createUnion, is, type InferUnion } from "dismatch";
 
-- Getting Started — install, quick start
-- Discriminated Unions — concept primer
-- Standalone API — matching, mapping, folding, predicates, errors
-- `createPipeHandlers` — handler reuse and pipe composition
-- RemoteData
-- Async APIs
-- `createUnion`, `InferUnion`, `isKnown`
-- Type Helpers
-- Comparison
-- Changelog
+const Shape = createUnion({
+  circle: (radius: number) => ({ radius }),
+  rectangle: (width: number, height: number) => ({ width, height }),
+});
+
+type Shape = InferUnion<typeof Shape>;
+
+const area = Shape.match({
+  circle: ({ radius }) => Math.PI * radius ** 2,
+  rectangle: ({ width, height }) => width * height,
+});
+
+area(Shape.circle(5)); // 78.54
+```
+
+<TryInPlayground id="match-reusable" />
+
+> `switch` gives you exhaustiveness. `dismatch` gives you exhaustiveness plus
+> reusable typed matchers, `map`, `fold`, `partition`, `count`, `is`, runtime
+> validation, and async — all from a single schema.
+
+## What sets it apart
+
+- **Reusable handlers.** `match`, `map`, `fold` return typed functions you can
+  pass to `array.map`, `pipe`, or store in a variable. Other libraries make
+  every match one-shot.
+- **Variant-aware collections.** `count`, `partition`, `fold` operate on whole
+  arrays in a single pass, with both branches narrowed.
+- **First-class async.** `matchAsync`, `matchAllAsync`, `foldAsync` and
+  friends return `Promise<R>` — never `Promise<A> | Promise<B>` — and freely
+  mix sync handlers.
+- **Runtime safety.** `isKnown` validates incoming data against the declared
+  schema; `UnknownVariantError` carries `.variant` and `.known` for clean
+  reporting.
+- **Companion `RemoteData`.** A ready-made `Idle | Loading | Refreshing | Ok
+  | Failed` union for async UI state, usable with every dismatch API.
+
+## Where to go next
+
+- Brand new? Read [Getting Started](/docs/getting-started) and the
+  [Discriminated Unions](/docs/discriminated-unions) primer.
+- Already comfortable with DUs? Jump to [Standalone
+  API](/docs/standalone-api/matching) or [`createPipeHandlers`](/docs/pipe-handlers).
+- Building UI for async data? See [RemoteData](/docs/remote-data) and
+  [Async APIs](/docs/async).
+- Want a side-by-side with other libraries? See
+  [Comparison](/docs/comparison).

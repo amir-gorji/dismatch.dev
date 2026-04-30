@@ -1,0 +1,93 @@
+---
+title: Matching
+description: match — exhaustive pattern matching that returns a value, and matchWithDefault — partial matching with a Default fallback.
+---
+
+## `match`
+
+Exhaustive pattern matching. TypeScript errors if a variant is missing.
+
+```ts
+import { match } from "dismatch";
+
+type Shape =
+  | { type: "circle"; radius: number }
+  | { type: "rectangle"; width: number; height: number };
+
+const area = match(shape)({
+  circle: ({ radius }) => Math.PI * radius ** 2,
+  rectangle: ({ width, height }) => width * height,
+});
+```
+
+Each handler receives the **data fields** of its variant — never the
+discriminant. Missing a variant is a compile-time error; passing one that
+isn't on the union is also an error.
+
+`match` returns a single value. To produce a function you can reuse — call
+many times, drop into `array.map`, or compose in a pipe — bind handlers
+through [`createPipeHandlers`](/docs/pipe-handlers) or a `createUnion`
+factory.
+
+<TryInPlayground id="match-reusable" />
+
+### Custom discriminant
+
+```ts
+match(event, "kind")({
+  click: ({ x }) => `clicked at ${x}`,
+  key: ({ code }) => `pressed ${code}`,
+});
+```
+
+### Runtime safety
+
+If a value reaches `match` with a variant not in the handler map (for example
+because data was deserialised from an external source), `match` throws
+[`UnknownVariantError`](/docs/standalone-api/errors). Use `matchWithDefault`
+when you want to route unknown variants to a fallback instead.
+
+## `matchWithDefault`
+
+Partial matching with a `Default` fallback. The fallback receives the **full
+union item** (with the discriminant), so you can branch on it inside.
+
+```ts
+import { matchWithDefault } from "dismatch";
+
+const banner = matchWithDefault(result)({
+  error: ({ message }) => `Error: ${message}`,
+  Default: () => "All good",
+});
+```
+
+`matchWithDefault` never throws `UnknownVariantError` — anything not handled
+explicitly routes to `Default`.
+
+<TryInPlayground id="match-with-default" />
+
+### When `Default` needs the variant
+
+If `Default` should distinguish between unhandled variants, branch on the
+discriminant inside it:
+
+```ts
+const label = matchWithDefault(notification)({
+  push: ({ message }) => `[PUSH] ${message}`,
+  Default: (item) => {
+    if (item.type === "email") return `[EMAIL] ${item.subject}`;
+    if (item.type === "sms") return `[SMS] ${item.from}`;
+    return "[unknown]";
+  },
+});
+```
+
+## Reach for what next
+
+- Need to handle every variant but **return a transformed union**, not a
+  scalar? Use [`mapAll`](/docs/standalone-api/mapping).
+- Need to **aggregate** across a collection? Use
+  [`fold`](/docs/standalone-api/folding).
+- Need to handle async handlers? Use
+  [`matchAsync`](/docs/async#matchasync) or
+  [`matchWithDefaultAsync`](/docs/async#matchwithdefaultasync).

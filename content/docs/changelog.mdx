@@ -1,0 +1,46 @@
+---
+title: Changelog
+description: Release notes for dismatch. The authoritative source is GitHub Releases.
+---
+
+The authoritative changelog is published with every release on GitHub.
+
+- [GitHub Releases](https://github.com/amir-gorji/dismatch/releases) —
+  versioned notes for every published version.
+- [`CHANGELOG.md`](https://github.com/amir-gorji/dismatch/blob/main/CHANGELOG.md)
+  — the same notes, in the repository.
+- [Tags](https://github.com/amir-gorji/dismatch/tags) — browse the source at
+  any released version.
+
+## Current version
+
+The latest release is **2.5.0**.
+
+These docs always describe the latest release. If you need to read the docs
+as they were at an earlier version, browse the [tags on GitHub](https://github.com/amir-gorji/dismatch/tags)
+and view that tag's `README.md`.
+
+## Migrating to 2.x
+
+The 2.x line consolidated the API around the **handlers-first**,
+**curried**, **value-first** convention used today and split async into a
+dedicated subpath:
+
+- Async helpers moved to `dismatch/async`. Replace
+  `import { matchAsync } from "dismatch"` with
+  `import { matchAsync } from "dismatch/async"`.
+- `RemoteData` moved to `dismatch/remote-data`.
+- Standalone functions are now value-first: `match(value)(handlers)` rather
+  than `match(handlers)(value)`. Bound matchers on `createUnion` factories
+  and `createPipeHandlers` remain handlers-first by design — see
+  [`createPipeHandlers`](/docs/pipe-handlers#why-the-argument-order-is-reversed)
+  for why.
+
+Beyond that, the API is intentionally small — most call sites need no
+changes once imports are updated.
+
+## Trying the playground at an earlier version
+
+The [Playground](/playground/) has a built-in version switcher backed by
+jsDelivr — you can run any published version of `dismatch` in the browser
+without changing the docs. The dropdown lives in the playground header.

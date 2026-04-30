@@ -1,4 +1,20 @@
 {
   "title": "Documentation",
-  "pages": ["index"]
+  "pages": [
+    "index",
+    "---Getting started---",
+    "getting-started",
+    "discriminated-unions",
+    "---Using dismatch---",
+    "using-standalone-functions",
+    "standalone-api",
+    "pipe-handlers",
+    "remote-data",
+    "async",
+    "create-union",
+    "---Reference---",
+    "type-helpers",
+    "comparison",
+    "changelog"
+  ]
 }

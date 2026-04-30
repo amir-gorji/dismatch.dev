@@ -1,0 +1,117 @@
+---
+title: Predicates & Stats
+description: is — value-first type guard, count — variant tally, partition — split with both branches narrowed, isUnion — runtime structure check.
+---
+
+These four functions cover narrowing, counting, splitting, and structural
+validation — the operations you reach for when working with collections of
+unions.
+
+## `is`
+
+Value-first type guard for `if`-block narrowing. Accepts a single variant or
+an array of variants.
+
+```ts
+import { is } from "dismatch";
+
+if (is(shape, "circle")) {
+  shape.radius; // narrowed to circle
+}
+
+if (is(shape, ["circle", "rectangle"])) {
+  shape; // narrowed to circle | rectangle
+}
+```
+
+<TryInPlayground id="is-guard" />
+
+### Custom discriminant
+
+```ts
+is(event, "click", "kind");
+is(event, ["click", "keydown"], "kind");
+```
+
+### Variant-first form for `.filter()`
+
+For predicate composition (`array.filter`, `array.find`, pipe chains), the
+value-first `is` is awkward — TypeScript needs the variant up front to
+narrow. Use the variant-first predicate factory instead, available on any
+factory or pipe-handlers binding:
+
+```ts
+const errors = results.filter(Result.is("error"));
+//    ^? { type: 'error'; message: string }[]
+```
+
+See [`createPipeHandlers`](/docs/pipe-handlers#variant-first-predicates) for
+the same pattern on plain types.
+
+## `count`
+
+Counts how many items in a collection match the given variant(s). Single
+pass, no intermediate array allocation.
+
+```ts
+import { count } from "dismatch";
+
+type Notification =
+  | { type: "NEW" }
+  | { type: "ACTION_NEEDED" }
+  | { type: "INFO" };
+
+count(notifications, "NEW"); // 2
+count(notifications, ["NEW", "ACTION_NEEDED"]); // 3
+count(events, ["click", "keydown"], "kind"); // custom discriminant
+```
+
+<TryInPlayground id="count-partition" />
+
+No TypeScript library offers a variant-aware counter — this is unique to
+dismatch.
+
+## `partition`
+
+Splits a collection into two arrays — items matching the variant(s) and the
+rest — in one pass with both branches **narrowed**.
+
+```ts
+import { partition } from "dismatch";
+
+const [circles, rest] = partition(shapes, "circle");
+//      ^? Circle[]   ^? (Rectangle | Triangle)[]
+
+const [actionable, rest] = partition(notifications, ["NEW", "ACTION_NEEDED"]);
+
+const [clicks, others] = partition(events, "click", "kind");
+```
+
+The narrowing of the **second** branch — the items that did *not* match — is
+what sets `partition` apart from a hand-written `reduce` or two-pass
+`filter`. No other TypeScript library narrows both sides.
+
+## `isUnion`
+
+Runtime check that a value is a structurally valid discriminated union: an
+object with a string-typed discriminant property.
+
+```ts
+import { isUnion } from "dismatch";
+
+isUnion({ type: "ok", data: 42 }); // true
+isUnion(null); // false
+isUnion({ kind: "click" }, "kind"); // true — custom discriminant
+isUnion({ data: 42 }); // false — no discriminant
+```
+
+`isUnion` is a **structural** check, not a schema-membership check. It says
+nothing about whether the variant tag is one your code actually handles —
+for that, use `Result.isKnown(value)` from a `createUnion` factory.
+
+## Reach for what next
+
+- Need to react to unknown variants at the matcher level? See
+  [`UnknownVariantError`](/docs/standalone-api/errors).
+- Want predicates and counters on a typed union without `createUnion`? See
+  [`createPipeHandlers`](/docs/pipe-handlers).
