@@ -1,6 +1,6 @@
 export const STARTER_CODE = `import { createUnion, is, type InferUnion } from "dismatch";
 
-const Shape = createUnion("type", {
+const Shape = createUnion({
   circle: (radius: number) => ({ radius }),
   rectangle: (width: number, height: number) => ({ width, height }),
   triangle: (base: number, height: number) => ({ base, height }),
