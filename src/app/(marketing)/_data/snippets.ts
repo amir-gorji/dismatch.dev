@@ -67,6 +67,7 @@ shapes.filter(is('triangle')).map(area);`,
 
   toast: `import { createUnion } from 'dismatch';
 
+// 'kind' is optional, defaults to 'type'
 const Toast = createUnion('kind', {
   info:    (text: string) => ({ text }),
   success: (text: string) => ({ text }),
