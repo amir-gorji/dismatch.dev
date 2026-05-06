@@ -18,23 +18,34 @@ console.log(e);
 console.log(l);
 `,
 
-  "match-reusable": `import { createUnion, type InferUnion } from "dismatch";
+  "match-reusable": `import { createUnion, is, type InferUnion } from "dismatch";
 
 const Shape = createUnion({
   circle: (radius: number) => ({ radius }),
   rectangle: (width: number, height: number) => ({ width, height }),
+  triangle: (base: number, height: number) => ({ base, height }),
 });
 
 type Shape = InferUnion<typeof Shape>;
 
-const getArea = Shape.match({
+const area = Shape.match({
   circle: ({ radius }) => Math.PI * radius ** 2,
   rectangle: ({ width, height }) => width * height,
+  triangle: ({ base, height }) => 0.5 * base * height,
 });
 
-const shapes: Shape[] = [Shape.circle(5), Shape.rectangle(3, 4)];
+const shapes: Shape[] = [
+  Shape.circle(5),
+  Shape.rectangle(3, 4),
+  Shape.triangle(6, 8),
+];
 
-console.log(shapes.map(getArea));
+for (const shape of shapes) {
+  console.log(shape.type, "→ area =", area(shape).toFixed(2));
+}
+
+const triangle = shapes.find((s) => is(s, "triangle"));
+console.log("first triangle:", triangle);
 `,
 
   "match-with-default": `import { createUnion } from "dismatch";

@@ -18,10 +18,10 @@ export async function loadDismatchTypes({
   version: string;
   signal?: AbortSignal;
 }): Promise<void> {
-  const url = `https://cdn.jsdelivr.net/npm/dismatch@${encodeURIComponent(
+  const baseUrl = `https://cdn.jsdelivr.net/npm/dismatch@${encodeURIComponent(
     version,
-  )}/lib/index.d.ts`;
-  const res = await fetch(url, { signal });
+  )}/lib/`;
+  const res = await fetch(`${baseUrl}index.d.ts`, { signal });
   if (!res.ok) {
     throw new Error(
       `Failed to load types for dismatch@${version} (${res.status})`,
@@ -29,9 +29,34 @@ export async function loadDismatchTypes({
   }
   const raw = await res.text();
 
+  // index.d.ts imports types from a hashed chunk file (e.g. types-XXXX.js).
+  // Monaco can't follow that relative import inside a `declare module` block,
+  // so ReservedUnionKeys / UnionSchema / UnionFactory all become `any`.
+  // That makes ValidUnionSchema collapse to `never`, causing red squiggles on
+  // every createUnion call. Fix: fetch the chunk and inline its declarations.
+  let body = raw;
+  const chunkMatch = raw.match(/^import \{[^}]+\} from '(\.\/[^']+\.js)';?$/m);
+  if (chunkMatch) {
+    const chunkFilename = chunkMatch[1].replace(/\.js$/, ".d.ts").replace(/^\.\//, "");
+    const chunkRes = await fetch(`${baseUrl}${chunkFilename}`, { signal });
+    if (chunkRes.ok) {
+      const chunkRaw = await chunkRes.text();
+      // Strip the minified re-export line (abbreviated names like "SampleUnion as S")
+      const chunkTypes = chunkRaw.replace(/^export type \{[^}]+\};?\s*$/m, "");
+      // Remove the chunk import from index.d.ts
+      body = body.replace(/^import \{[^}]+\} from '\.\/[^']+\.js';?\n?/m, "");
+      // Replace the chunk re-export of InferUnion with a direct export
+      body = body.replace(
+        /^export \{ I as InferUnion \} from '\.\/[^']+\.js';?\n?/m,
+        "export type { InferUnion };\n",
+      );
+      body = `${chunkTypes}\n${body}`;
+    }
+  }
+
   // Wrap the bundled .d.ts in an ambient module so `import from "dismatch"` resolves.
   // Inside `declare module`, `export declare` is redundant and rejected by some TS versions.
-  const body = raw.replace(/^export\s+declare\s+/gm, "export ");
+  body = body.replace(/^export\s+declare\s+/gm, "export ");
   const declaration = `declare module "dismatch" {\n${body}\n}\n`;
 
   activeDisposable?.dispose();

@@ -34,7 +34,7 @@ const greet = match(Result.ok('ready'))({
 
   asyncState: `import { createUnion, type InferUnion } from 'dismatch';
 
-const Fetch = createUnion('state', {
+const Fetch = createUnion({
   idle: () => ({}),
   loading: () => ({}),
   success: (data: User[]) => ({ data }),
@@ -51,7 +51,7 @@ const render = Fetch.match({
 
   shape: `import { createUnion, is } from 'dismatch';
 
-const Shape = createUnion('type', {
+const Shape = createUnion({
   circle: (radius: number) => ({ radius }),
   rectangle: (width: number, height: number) => ({ width, height }),
   triangle: (base: number, height: number) => ({ base, height }),
@@ -67,6 +67,7 @@ shapes.filter(is('triangle')).map(area);`,
 
   toast: `import { createUnion } from 'dismatch';
 
+// 'kind' is optional, defaults to 'type'
 const Toast = createUnion('kind', {
   info:    (text: string) => ({ text }),
   success: (text: string) => ({ text }),
