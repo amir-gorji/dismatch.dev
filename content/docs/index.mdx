@@ -34,6 +34,10 @@ area(Shape.circle(5)); // 78.54
 
 ## What sets it apart
 
+- **No runtime wrappers.** `createUnion` produces plain `{ type, ... }`
+  objects, so values cross network boundaries, debug cleanly, and interop
+  with `switch` / `ts-pattern` without unwrapping. See [Removing
+  dismatch](/docs/removing-dismatch) for the exit path.
 - **Reusable handlers.** `match`, `map`, `fold` return typed functions you can
   pass to `array.map`, `pipe`, or store in a variable. Other libraries make
   every match one-shot.

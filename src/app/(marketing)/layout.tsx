@@ -85,6 +85,9 @@ export default function MarketingLayout({
                 guards, exhaustive matchers, transforms, and collection ops —
                 from one schema, in roughly two kilobytes.
               </p>
+              <p className='mt-2 text-xs text-muted-foreground/60'>
+                Built to make your life easier — this site included. No cookies.
+              </p>
             </div>
             <div className='flex flex-wrap items-center gap-4 text-sm text-muted-foreground'>
               <Link

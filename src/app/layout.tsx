@@ -5,7 +5,7 @@ import { ThemeProvider } from "@/components/theme-provider";
 
 const SITE_URL = "https://dismatch.dev";
 const DESCRIPTION =
-  "dismatch is a 2 kB TypeScript library for discriminated unions: constructors, type guards, exhaustive matching, partial transforms, and collection ops — all from a single schema.";
+  "dismatch is a 2.4 kB TypeScript library for discriminated unions: constructors, type guards, exhaustive matching, partial transforms, and collection ops — all from a single schema.";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),

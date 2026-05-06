@@ -32,7 +32,7 @@ const rows: Row[] = [
       plain: { kind: 'text', note: '0 — built in' },
       tspat: { kind: 'text', note: '~7.7 kB' },
       effect: { kind: 'text', note: 'ecosystem-sized' },
-      dismatch: { kind: 'text', note: '~2 kB' },
+      dismatch: { kind: 'text', note: '~2.4 kB' },
     },
   },
   {
@@ -51,6 +51,24 @@ const rows: Row[] = [
       tspat: { kind: 'yes', note: '.exhaustive()' },
       effect: { kind: 'yes' },
       dismatch: { kind: 'yes', note: 'default' },
+    },
+  },
+  {
+    capability: 'Plain-object output (wire-serializable, no wrappers)',
+    cells: {
+      plain: { kind: 'yes' },
+      tspat: { kind: 'text', note: 'N/A — matcher only' },
+      effect: { kind: 'no', note: 'class instances' },
+      dismatch: { kind: 'yes' },
+    },
+  },
+  {
+    capability: 'Source-level exit cost',
+    cells: {
+      plain: { kind: 'text', note: 'n/a' },
+      tspat: { kind: 'text', note: 'low' },
+      effect: { kind: 'text', note: 'high' },
+      dismatch: { kind: 'text', note: 'low — mechanical' },
     },
   },
   {

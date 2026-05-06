@@ -3,6 +3,7 @@ import { bento } from '../_data/snippets';
 
 import { BentoTsError } from './bento-ts-error';
 import { CodeBlock } from './code-block';
+import Link from 'next/link';
 
 export function BentoGrid() {
   return (
@@ -60,8 +61,10 @@ export function BentoGrid() {
           <Eyebrow>RemoteData included</Eyebrow>
           <CardTitle>The five-state UI in one import.</CardTitle>
           <CardDescription className='mb-3'>
-            <span className='font-mono text-xs'>idle · loading · refreshing · ok · failed</span> — the
-            shape every async screen wants.
+            <span className='font-mono text-xs'>
+              idle · loading · refreshing · ok · failed
+            </span>{' '}
+            — the shape every async screen wants.
           </CardDescription>
           <CodeBlock snippet={bento.remote} showCopy={false} />
         </Card>
@@ -69,7 +72,8 @@ export function BentoGrid() {
         <Card className='lg:col-span-3'>
           <Eyebrow>One schema, ten capabilities</Eyebrow>
           <CardTitle>
-            <span className='font-mono text-base'>createUnion</span> is the whole API.
+            <span className='font-mono text-base'>createUnion</span> is the
+            whole API.
           </CardTitle>
           <CodeBlock snippet={bento.schema} showCopy={false} />
         </Card>
@@ -83,7 +87,8 @@ export function BentoGrid() {
         <Card className='lg:col-span-3'>
           <Eyebrow>Type guards that narrow arrays</Eyebrow>
           <CardTitle>
-            <span className='font-mono text-base'>is(value, variant)</span> — single, multi, sub-union.
+            <span className='font-mono text-base'>is(value, variant)</span> —
+            single, multi, sub-union.
           </CardTitle>
           <CodeBlock snippet={bento.is} showCopy={false} />
         </Card>
@@ -112,6 +117,29 @@ export function BentoGrid() {
             functional <span className='font-mono text-xs'>pipe</span>.
           </CardDescription>
           <CodeBlock snippet={bento.pipe} showCopy={false} />
+        </Card>
+
+        <Card className='lg:col-span-6'>
+          <Eyebrow>No runtime wrappers · low exit cost</Eyebrow>
+          <CardTitle>
+            Plain <span className='font-mono text-base'>{'{ type, ... }'}</span>{' '}
+            objects in. Plain objects out.
+          </CardTitle>
+          <CardDescription className='mb-3'>
+            Constructors return the same shape you would write by hand, so
+            values serialize cleanly over the wire, debug without confusion, and
+            feed <span className='font-mono text-xs'>switch</span> or{' '}
+            <span className='font-mono text-xs'>ts-pattern</span> with no
+            unwrapping. Removing dismatch later is a mechanical rewrite — see
+            the{' '}
+            <Link
+              href='/docs/removing-dismatch'
+              className='underline decoration-(--color-accent-brand)/40 underline-offset-4 hover:text-(--color-accent-brand-strong)'
+            >
+              exit path
+            </Link>
+            .
+          </CardDescription>
         </Card>
       </div>
     </section>
