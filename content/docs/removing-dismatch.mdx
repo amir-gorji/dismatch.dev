@@ -1,0 +1,117 @@
+---
+title: Removing dismatch
+description: Plain-object output and TS-native types make removing dismatch a mechanical rewrite, not a redesign. Plus how to mix dismatch with switch / ts-pattern incrementally.
+---
+
+Lock-in is a fair concern when a library shows up at hundreds of call sites.
+`dismatch` is designed so removal is mechanical, not redesign:
+
+- **Values are plain objects.** `circle(5)` returns
+  `{ type: "circle", radius: 5 }`. Nothing to unwrap, nothing to migrate at
+  the call sites that consume the data.
+- **Types are TS-native discriminated unions.** If you used the
+  [exit-friendly style](/docs/getting-started/quick-start#re-exporting-constructors),
+  the type alias has no dependency on `dismatch` at all.
+- **Matchers are exhaustive `switch` in disguise.** TypeScript already
+  enforces exhaustiveness on `switch` over discriminated unions.
+
+## Mechanical rewrite
+
+Starting from this `dismatch` code:
+
+```ts
+import { createUnion } from "dismatch";
+
+const _Result = createUnion({
+  ok: (data: string) => ({ data }),
+  err: (message: string) => ({ message }),
+});
+export const { ok, err, match, is } = _Result;
+export type Result = ReturnType<typeof ok> | ReturnType<typeof err>;
+
+// call sites
+const r = ok("hi");
+const banner = match({
+  ok: ({ data }) => `Loaded: ${data}`,
+  err: ({ message }) => `Error: ${message}`,
+});
+if (is("ok")(r)) r.data;
+```
+
+Replace constructors with object literals, matchers with `switch`, and
+`is(...)` with `===`. The `Result` type alias does not change:
+
+```ts
+export const ok = (data: string) => ({ type: "ok" as const, data });
+export const err = (message: string) => ({ type: "err" as const, message });
+export type Result = ReturnType<typeof ok> | ReturnType<typeof err>;
+
+const banner = (r: Result) => {
+  switch (r.type) {
+    case "ok":  return `Loaded: ${r.data}`;
+    case "err": return `Error: ${r.message}`;
+  }
+};
+const r = ok("hi");
+if (r.type === "ok") r.data;
+```
+
+The constructor-call shape (`ok("hi")`) is unchanged at every call site —
+only the constructor *definition* file is touched. Matcher rewrites are
+local to wherever you called `match(...)`.
+
+## Incremental adoption — you don't have to leave to mix tools
+
+Because output is plain `{ type, ... }`, dismatch values feed any other
+matcher unchanged. Use whichever tool fits the call site:
+
+```ts
+import { match as tsPatternMatch } from "ts-pattern";
+
+const r = ok("hi"); // dismatch constructor
+
+// Plain switch — zero dependencies
+switch (r.type) {
+  case "ok":  /* ... */ break;
+  case "err": /* ... */ break;
+}
+
+// ts-pattern — for nested patterns, regex, wildcards
+const label = tsPatternMatch(r)
+  .with({ type: "ok" }, ({ data }) => data)
+  .with({ type: "err" }, ({ message }) => message)
+  .exhaustive();
+
+// dismatch — for reusable typed matchers
+const banner = match({
+  ok:  ({ data })    => `Loaded: ${data}`,
+  err: ({ message }) => `Error: ${message}`,
+});
+```
+
+You can adopt `createUnion` for value generation today and reach for
+`ts-pattern` (or a plain `switch`) wherever its strengths matter — no
+conversion layer, no wrapping, no factory dependency at the matcher.
+
+## Why this works
+
+- `createUnion` constructors are thin functions that spread your data and
+  inject the discriminant. The output is structurally identical to a hand-
+  written tagged object.
+- Bound matchers (`Result.match`, `Result.is`, …) are the same standalone
+  functions described in the [Standalone API](/docs/standalone-api/matching),
+  pre-bound to the union type and discriminant. They never wrap the value.
+- The type system contribution is `InferUnion` — a thin alias over
+  `ReturnType` of the schema's constructors. The
+  [exit-friendly style](/docs/getting-started/quick-start#re-exporting-constructors)
+  skips even that, deriving the type from `ReturnType<typeof ok> | ...`
+  directly.
+
+## See also
+
+- [Re-exporting constructors](/docs/getting-started/quick-start#re-exporting-constructors)
+  — the two idioms (namespace style vs. exit-friendly style).
+- [`createUnion`](/docs/create-union#re-exporting-constructors) — the same
+  patterns, in the API reference.
+- [Comparison](/docs/comparison) — adoption & interop side-by-side with
+  other libraries.

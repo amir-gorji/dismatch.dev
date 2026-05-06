@@ -38,6 +38,56 @@ const e = Result.error("fail"); // { type: 'error', message: 'fail' }
 const l = Result.loading(); // { type: 'loading' }
 ```
 
+Constructors return plain objects with no runtime wrappers — they
+serialize over the wire, debug cleanly, and feed any other matcher
+unchanged. See [Removing dismatch](/docs/removing-dismatch).
+
+## Re-exporting constructors
+
+The factory is just a plain object, so you can destructure anything off
+it — constructors, matchers, predicates — and re-export them however you
+like. Two idioms cover the common cases.
+
+**Namespace style** — keep the factory public, destructure for
+ergonomics:
+
+```ts
+// result.ts
+export const Result = createUnion({
+  ok: (data: string) => ({ data }),
+  err: (message: string) => ({ message }),
+});
+export type Result = InferUnion<typeof Result>;
+export const { ok, err } = Result;
+
+// consumer.ts
+import { Result, ok } from "./result";
+const r = ok("hi");
+const banner = Result.match({ /* ... */ });
+```
+
+**Exit-friendly style** — keep the factory file-private; only
+constructors and the type leave the module. The type alias derives from
+`ReturnType` of the constructors, so it has no dependency on the factory:
+
+```ts
+// result.ts
+const _Result = createUnion({
+  ok: (data: string) => ({ data }),
+  err: (message: string) => ({ message }),
+});
+export const { ok, err, match, matchWithDefault, is } = _Result;
+export type Result = ReturnType<typeof ok> | ReturnType<typeof err>;
+
+// consumer.ts
+import { ok, match, type Result } from "./result";
+```
+
+The exit-friendly style is what makes [Removing
+dismatch](/docs/removing-dismatch) mechanical: the type alias survives
+even after the factory is gone, because it's a TS-native discriminated
+union.
+
 ## `isKnown`
 
 `isKnown` is the runtime schema-membership check — `true` if the value is

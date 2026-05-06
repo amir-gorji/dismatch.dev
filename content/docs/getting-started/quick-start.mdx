@@ -45,6 +45,51 @@ const Event = createUnion("kind", {
 });
 ```
 
+### Re-exporting constructors
+
+`createUnion` returns a plain object holding constructors, matchers, and
+metadata, so you can destructure and re-export anything you want. Two
+idioms cover the common cases.
+
+**Namespace style** — keep the factory public, destructure for ergonomics:
+
+```ts
+// shape.ts
+export const Shape = createUnion({
+  circle: (radius: number) => ({ radius }),
+  rectangle: (width: number, height: number) => ({ width, height }),
+});
+export type Shape = InferUnion<typeof Shape>;
+export const { circle, rectangle } = Shape;
+
+// consumer.ts
+import { Shape, circle } from "./shape";
+const c = circle(5);
+const area = Shape.match({ /* ... */ });
+```
+
+**Exit-friendly style** — keep the factory file-private; only
+constructors and the type leave the module. The type alias derives from
+`ReturnType` of the constructors, so it has no dependency on the factory:
+
+```ts
+// shape.ts
+const _Shape = createUnion({
+  circle: (radius: number) => ({ radius }),
+  rectangle: (width: number, height: number) => ({ width, height }),
+});
+export const { circle, rectangle, match, matchWithDefault, is } = _Shape;
+export type Shape = ReturnType<typeof circle> | ReturnType<typeof rectangle>;
+
+// consumer.ts
+import { circle, match, type Shape } from "./shape";
+```
+
+The exit-friendly style is what makes [Removing
+dismatch](/docs/removing-dismatch) mechanical: the type alias survives
+even after the factory is gone, because it's a TS-native discriminated
+union.
+
 ## 2. Construct values
 
 ```ts

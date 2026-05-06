@@ -24,6 +24,9 @@ The short answer: pick the tool that matches your problem.
 | Zero dependencies                                   |             ✓              |           ✓           |     ✓     |          ✗           |
 | Per-function tree-shaking                           |             ✓              |        partial        |     —     |       partial        |
 | Active maintenance                                  |             ✓              |           ✓           | ✗ (2018)  |          ✓           |
+| **Adoption & interop**                              |                            |                       |           |                      |
+| Plain-object output (wire-serializable, no wrappers)|             ✓              |          N/A          |     ✓     |          ✗           |
+| Source-level exit cost                              |     low (mechanical)       |          N/A          |    low    |        high          |
 | **Compile-time correctness**                        |                            |                       |           |                      |
 | Exhaustive matching for DUs                         |             ✓              | ✓ via `.exhaustive()` |     ✓     |          ✓           |
 | No `{ type: '…' }` / `.with()` ceremony per branch  |             ✓              |           ✗           |     ✓     |          ✗           |
