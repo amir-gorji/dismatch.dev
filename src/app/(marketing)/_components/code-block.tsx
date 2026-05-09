@@ -9,6 +9,7 @@ interface CodeBlockProps {
   showCopy?: boolean;
   caption?: string;
   filename?: string;
+  hideHeader?: boolean;
 }
 
 export function CodeBlock({
@@ -17,9 +18,10 @@ export function CodeBlock({
   showCopy = true,
   caption,
   filename,
+  hideHeader = false,
 }: CodeBlockProps) {
   const cap = caption ?? snippet.caption;
-  const hasHeader = Boolean(filename || cap);
+  const hasHeader = !hideHeader && Boolean(filename || cap);
   return (
     <div className={cn('code-panel', className)}>
       {hasHeader && (

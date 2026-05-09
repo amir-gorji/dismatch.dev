@@ -23,7 +23,7 @@ export function BentoGrid() {
         </p>
       </div>
 
-      <div className='mt-10 grid auto-rows-[minmax(0,1fr)] gap-4 lg:grid-cols-6'>
+      <div className='mt-10 grid gap-4 lg:auto-rows-[minmax(0,1fr)] lg:grid-cols-6'>
         <Card className='lg:col-span-4 lg:row-span-2'>
           <Eyebrow>Compile-time exhaustiveness</Eyebrow>
           <CardTitle>Forget a branch and TypeScript stops you.</CardTitle>

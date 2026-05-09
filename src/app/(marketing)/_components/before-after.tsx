@@ -27,7 +27,7 @@ export function BeforeAfter() {
           title={beforeAfter.before.label}
           subtitle={beforeAfter.before.caption}
         >
-          <CodeBlock snippet={beforeAfter.before} showCopy={false} />
+          <CodeBlock snippet={beforeAfter.before} showCopy={false} hideHeader />
         </Panel>
 
         <div className='flex items-center justify-center text-muted-foreground/70'>
@@ -39,7 +39,7 @@ export function BeforeAfter() {
           title={beforeAfter.after.label}
           subtitle={beforeAfter.after.caption}
         >
-          <CodeBlock snippet={beforeAfter.after} />
+          <CodeBlock snippet={beforeAfter.after} hideHeader />
         </Panel>
       </div>
     </section>
@@ -60,7 +60,7 @@ function Panel({
   return (
     <div
       className={cn(
-        'flex flex-col gap-3 rounded-3xl border p-1.5',
+        'flex min-w-0 flex-col gap-3 rounded-3xl border p-1.5',
         tone === 'before'
           ? 'border-destructive/30 bg-(--color-danger-soft)'
           : 'border-(--color-accent-brand)/40 bg-(--color-accent-brand-soft)',

@@ -32,7 +32,7 @@ export default function HomePage() {
 function Hero() {
   return (
     <section className='relative grid gap-10 py-12 sm:py-20 lg:grid-cols-[minmax(0,1.05fr)_minmax(360px,0.95fr)] lg:items-center'>
-      <div className='max-w-2xl'>
+      <div className='min-w-0 max-w-2xl'>
         <p className='accent-pill'>
           <span className='h-1.5 w-1.5 rounded-full bg-(--color-accent-brand) motion-safe:animate-pulse' />
           v2.5 — ~1.4 kB gzipped · zero deps · async included
@@ -105,7 +105,7 @@ function Hero() {
         </div>
       </div>
 
-      <div className='lg:pl-4'>
+      <div className='min-w-0 lg:pl-4'>
         <HeroShowcase snippets={heroSnippets} />
       </div>
     </section>
