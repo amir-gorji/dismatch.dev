@@ -48,16 +48,16 @@ export default function MarketingLayout({
                 >
                   npm
                 </a>
-                <a
-                  href='https://github.com/amir-gorji/dismatch'
-                  target='_blank'
-                  rel='noreferrer'
-                  aria-label='GitHub repository'
-                  className='inline-flex h-9 w-9 items-center justify-center rounded-full text-muted-foreground transition-colors hover:text-foreground'
-                >
-                  <GithubGlyph className='h-4 w-4' />
-                </a>
               </nav>
+              <a
+                href='https://github.com/amir-gorji/dismatch'
+                target='_blank'
+                rel='noreferrer'
+                aria-label='GitHub repository'
+                className='inline-flex h-9 w-9 items-center justify-center rounded-full text-muted-foreground transition-colors hover:text-foreground'
+              >
+                <GithubGlyph className='h-4 w-4' />
+              </a>
               <ThemeToggle />
               <Link
                 href='/playground/'
