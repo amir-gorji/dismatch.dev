@@ -35,12 +35,15 @@ function Hero() {
       <div className='min-w-0 max-w-2xl'>
         <p className='accent-pill'>
           <span className='h-1.5 w-1.5 rounded-full bg-(--color-accent-brand) motion-safe:animate-pulse' />
-          v2.5 — ~1.4 kB gzipped · zero deps · async included
+          v2.5 — ~1.1 kB gzipped · zero deps · async included
         </p>
 
         <h1 className='mt-6 font-heading text-5xl font-semibold tracking-tight text-balance sm:text-6xl lg:text-7xl'>
           Discriminated unions,{' '}
-          <span className='text-(--color-accent-brand-strong)'>without the boilerplate</span>.
+          <span className='text-(--color-accent-brand-strong)'>
+            without the boilerplate
+          </span>
+          .
         </h1>
 
         <p className='mt-6 max-w-xl text-lg leading-8 text-muted-foreground sm:text-xl'>
@@ -125,8 +128,7 @@ function UseCasesSection() {
         </h2>
         <p className='mt-3 max-w-xl text-base leading-7 text-muted-foreground'>
           Same primitives, four common screens. Pick a tab — the same
-          declaration drives the constructors, the matcher, and the type
-          guards.
+          declaration drives the constructors, the matcher, and the type guards.
         </p>
       </div>
 

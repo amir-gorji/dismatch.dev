@@ -3,13 +3,13 @@ title: Introduction
 description: Type-safe discriminated unions for TypeScript. Define once — get constructors, type guards, exhaustive matching, async dispatch, and runtime validation.
 ---
 
-`dismatch` is a small (~1.4 kB gzipped, zero dependencies) library that turns
+`dismatch` is a small (~1.1 kB gzipped, zero dependencies) library that turns
 discriminated unions into a complete toolkit: constructors, type guards,
 exhaustive pattern matching, partial transforms, fold-based aggregation,
 async dispatch, and runtime validation — all generated from a single schema.
 
 ```ts
-import { createUnion, is, type InferUnion } from "dismatch";
+import { createUnion, is, type InferUnion } from 'dismatch';
 
 const Shape = createUnion({
   circle: (radius: number) => ({ radius }),
@@ -26,7 +26,7 @@ const area = Shape.match({
 area(Shape.circle(5)); // 78.54
 ```
 
-<TryInPlayground id="match-reusable" />
+<TryInPlayground id='match-reusable' />
 
 > `switch` gives you exhaustiveness. `dismatch` gives you exhaustiveness plus
 > reusable typed matchers, `map`, `fold`, `partition`, `count`, `is`, runtime
@@ -50,7 +50,7 @@ area(Shape.circle(5)); // 78.54
   schema; `UnknownVariantError` carries `.variant` and `.known` for clean
   reporting.
 - **Companion `RemoteData`.** A ready-made `Idle | Loading | Refreshing | Ok
-  | Failed` union for async UI state, usable with every dismatch API.
+| Failed` union for async UI state, usable with every dismatch API.
 
 ## Where to go next
 
