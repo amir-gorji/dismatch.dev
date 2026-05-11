@@ -40,7 +40,7 @@ export function BentoGrid() {
         <Card className='lg:col-span-2'>
           <Eyebrow>Tiny</Eyebrow>
           <CardTitle>
-            <span className='text-(--color-accent-brand-strong)'>~1.4 kB</span>{' '}
+            <span className='text-(--color-accent-brand-strong)'>~1.1 kB</span>{' '}
             gzipped.
           </CardTitle>
           <ul className='mt-1 space-y-2 text-sm text-muted-foreground'>
