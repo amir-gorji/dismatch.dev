@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import Link from 'next/link';
 
 import { buttonVariants } from '@/components/ui/button';
@@ -15,9 +16,34 @@ import { heroSnippets, useCases } from './_data/snippets';
 
 const INSTALL = 'npm i dismatch';
 
+export const metadata: Metadata = {
+  alternates: { canonical: 'https://dismatch.dev/' },
+};
+
+const softwareApplicationJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'SoftwareApplication',
+  name: 'dismatch',
+  applicationCategory: 'DeveloperApplication',
+  url: 'https://dismatch.dev',
+  downloadUrl: 'https://www.npmjs.com/package/dismatch',
+  codeRepository: 'https://github.com/amir-gorji/dismatch',
+  description:
+    'dismatch is a TypeScript library for discriminated unions: constructors, type guards, exhaustive matching, partial transforms, and collection ops — all from a single schema.',
+  offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
+  license: 'https://github.com/amir-gorji/dismatch/blob/main/LICENSE',
+  author: { '@type': 'Person', name: 'Amir Gorji' },
+  programmingLanguage: 'TypeScript',
+  operatingSystem: 'Any',
+};
+
 export default function HomePage() {
   return (
     <div>
+      <script
+        type='application/ld+json'
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(softwareApplicationJsonLd) }}
+      />
       <Hero />
       <BeforeAfter />
       <BentoGrid />

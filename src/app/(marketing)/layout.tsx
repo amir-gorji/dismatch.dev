@@ -40,6 +40,12 @@ export default function MarketingLayout({
                 >
                   Docs
                 </Link>
+                <Link
+                  href='/docs/comparison/'
+                  className='rounded-full px-3 py-2 text-sm text-muted-foreground transition-colors hover:text-foreground'
+                >
+                  Comparison
+                </Link>
                 <a
                   href='https://www.npmjs.com/package/dismatch'
                   target='_blank'
