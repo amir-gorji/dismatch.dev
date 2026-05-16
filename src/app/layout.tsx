@@ -29,7 +29,6 @@ export const metadata: Metadata = {
   ],
   authors: [{ name: "Amir Gorji" }],
   creator: "Amir Gorji",
-  alternates: { canonical: SITE_URL },
   openGraph: {
     type: "website",
     url: SITE_URL,
